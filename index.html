@@ -107,13 +107,16 @@
     padding:clamp(20px,3.2vw,30px) clamp(20px,3.6vw,38px);
     flex-wrap:wrap;
   }
+  .sun-slot{
+    flex:0 0 auto;width:clamp(96px,14vw,132px);
+    display:grid;place-items:center;overflow:visible;
+  }
   .sun{
-    flex:0 0 auto;width:clamp(96px,14vw,132px);height:auto;
+    width:200%;height:auto;
     filter:drop-shadow(0 10px 26px rgba(0,0,0,.28));
-    transform:scale(2);transform-origin:center;
     animation:sunPulse 6s var(--ease) infinite;
   }
-  @keyframes sunPulse{0%,100%{transform:scale(2)}50%{transform:scale(2.08)}}
+  @keyframes sunPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
 
   .badr-body{flex:1 1 auto;min-width:0}
   .badr-kicker{
@@ -291,7 +294,7 @@
 
     /* compact badr card ~ button height */
     .badr-inner{flex-wrap:nowrap;gap:12px;padding:14px 16px}
-    .sun{width:58px}
+    .sun-slot{width:58px}
     .badr-kicker{display:none}
     .badr-sub{display:none}
     .meta{display:none}
@@ -330,7 +333,7 @@
   <!-- ===== بدر الكبرى progress ===== -->
   <section class="badr reveal" style="--d:.18s" aria-label="تقدّم خطة بدر الكبرى">
     <div class="badr-inner">
-      <img class="sun" src="assets/badr-logo.png" alt="بدر الكبرى — يوم الفرقان" />
+      <span class="sun-slot"><img class="sun" src="assets/badr-logo.png" alt="بدر الكبرى — يوم الفرقان" /></span>
       <div class="badr-body">
         <div class="badr-topline">
           <span class="badr-kicker"><span class="dot"></span> خطة المحتوى · بدر الكبرى</span>
