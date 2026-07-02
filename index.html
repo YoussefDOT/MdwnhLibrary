@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>مكتبة المدوّنة</title>
 <meta name="description" content="مكتبة المدوّنة — بوابة واحدة لكل روابط الفريق ومتابعة خطة بدر الكبرى." />
+<meta name="theme-color" content="#f3c02b" />
+<link rel="icon" type="image/png" href="assets/favicon.png" />
+<link rel="shortcut icon" type="image/png" href="assets/favicon.png" />
+<link rel="apple-touch-icon" href="assets/icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="المكتبة" />
+<link rel="manifest" href="manifest.webmanifest" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -106,7 +114,7 @@
   }
   @keyframes sunPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
 
-  .badr-body{flex:1 1 300px;min-width:min(100%,260px)}
+  .badr-body{flex:1 1 auto;min-width:0}
   .badr-kicker{
     display:inline-flex;align-items:center;gap:8px;
     font-size:.8rem;font-weight:700;letter-spacing:.5px;
@@ -135,14 +143,19 @@
   }
   .fill{
     position:absolute;inset-block:0;inset-inline-start:0;width:0;
-    border-radius:999px;
-    background:linear-gradient(270deg,var(--gold),#ffe9a3,var(--red));
-    background-size:200% 100%;
-    box-shadow:0 0 14px rgba(247,209,90,.6);
+    border-radius:999px;overflow:hidden;
+    background:linear-gradient(270deg,var(--gold),#f6cf6b,var(--red));
+    box-shadow:0 0 10px rgba(247,209,90,.35);
     transition:width 1.6s var(--ease);
-    animation:shine 3.5s linear infinite;
   }
-  @keyframes shine{0%{background-position:-200% 0}100%{background-position:0% 0}}
+  .fill::after{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(270deg,transparent 25%,rgba(255,255,255,.22) 50%,transparent 75%);
+    filter:blur(3px);
+    transform:translateX(120%);
+    animation:sheen 4.2s ease-in-out infinite;
+  }
+  @keyframes sheen{0%{transform:translateX(120%)}100%{transform:translateX(-120%)}}
   .meta{display:flex;justify-content:space-between;margin-top:10px;font-size:.82rem;font-weight:600;opacity:.92}
   .meta .end{color:var(--badr-glow)}
 
@@ -226,8 +239,25 @@
     box-shadow:0 4px 12px -4px rgba(243,192,43,.8);
   }
 
+  /* ---------- paper ---------- */
+  .paper-wrap{margin-top:clamp(30px,5vw,54px);text-align:center;line-height:0}
+  .paper{width:min(340px,72vw);height:auto;filter:drop-shadow(0 18px 26px rgba(138,90,18,.18));animation:bob 5s var(--ease) infinite}
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-12px) rotate(1deg)}}
+
   /* ---------- footer ---------- */
-  footer{margin-top:clamp(36px,5vw,60px);text-align:center;display:flex;flex-direction:column;align-items:center;gap:18px}
+  footer{margin-top:clamp(6px,1.5vw,14px);text-align:center;display:flex;flex-direction:column;align-items:center;gap:18px}
+
+  .pwa-btn{
+    display:none;align-items:center;gap:9px;
+    font-family:inherit;font-size:.92rem;font-weight:700;color:var(--ink);cursor:pointer;
+    background:#fff;border:1.5px solid rgba(38,38,38,.1);
+    padding:11px 20px;border-radius:999px;box-shadow:var(--shadow-sm);
+    transition:transform .35s var(--ease),box-shadow .35s var(--ease),background .35s var(--ease),color .35s var(--ease);
+  }
+  .pwa-btn.show{display:inline-flex}
+  .pwa-btn svg{width:18px;height:18px}
+  .pwa-btn:hover{transform:translateY(-3px);background:var(--gold);color:#fff;border-color:transparent;box-shadow:var(--shadow-md)}
+  .pwa-btn:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
   .socials{display:flex;gap:14px}
   .socials a{
     width:46px;height:46px;border-radius:14px;display:grid;place-items:center;
@@ -254,15 +284,31 @@
   @media(max-width:560px){
     .grid.main{grid-template-columns:1fr}
     .grid.coord{grid-template-columns:1fr}
-    .btn.b3{min-height:150px}
-    .badr-inner{justify-content:center;text-align:center}
-    .badr-headline{justify-content:center}
-    .badr-kicker{margin-inline:auto}
-    .sun{width:104px}
+    .brand-logo{height:46px}
+    .badr{margin-top:18px}
+    .section-head{margin:26px 2px 16px}
+
+    /* compact badr card ~ button height */
+    .badr-inner{flex-wrap:nowrap;gap:12px;padding:14px 16px}
+    .sun{width:58px}
+    .badr-kicker{display:none}
+    .badr-sub{display:none}
+    .meta{display:none}
+    .badr-topline{margin-bottom:7px;justify-content:flex-start}
+    .badr-headline{margin-bottom:9px;align-items:baseline;gap:7px}
+    .badr-headline .num{font-size:1.9rem}
+    .badr-headline .lbl{font-size:.8rem;line-height:1.25}
+    .pct-badge{font-size:.78rem;padding:4px 11px}
+    .pct-badge b{font-size:1rem}
+    .track{height:9px}
+
+    /* keep buttons bold, well-proportioned */
+    .btn{min-height:134px}
+    .btn.b3{min-height:134px}
   }
 
   @media(prefers-reduced-motion:reduce){
-    .deco,.sun,.fill,.reveal{animation:none!important}
+    .deco,.sun,.fill,.fill::after,.reveal,.paper{animation:none!important}
     .reveal{opacity:1;transform:none}
     .fill{transition:none}
   }
@@ -360,8 +406,17 @@
     </span>
   </nav>
 
+  <!-- ===== paper ===== -->
+  <div class="paper-wrap reveal" style="--d:.84s" aria-hidden="true">
+    <img class="paper" src="assets/paper.png" alt="" loading="lazy" />
+  </div>
+
   <!-- ===== footer ===== -->
-  <footer class="reveal" style="--d:.86s">
+  <footer class="reveal" style="--d:.92s">
+    <button class="pwa-btn" id="pwaBtn" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M5 21h14"/></svg>
+      ثبّت التطبيق على جهازك
+    </button>
     <div class="socials" aria-label="حسابات التواصل">
       <a data-net="youtube" href="https://www.youtube.com/@Mdwn.c" target="_blank" rel="noopener" aria-label="يوتيوب">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8ZM9.6 15.6V8.4l6.2 3.6-6.2 3.6Z"/></svg>
@@ -444,6 +499,38 @@
       deco.appendChild(d);
     });
   }
+
+  /* ----- service worker ----- */
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('sw.js').catch(function(){});
+    });
+  }
+
+  /* ----- PWA install ----- */
+  var pwaBtn = document.getElementById('pwaBtn');
+  var deferredPrompt = null;
+  var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault();
+    deferredPrompt = e;
+    if(!standalone) pwaBtn.classList.add('show');
+  });
+
+  pwaBtn.addEventListener('click', function(){
+    if(!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.finally(function(){
+      deferredPrompt = null;
+      pwaBtn.classList.remove('show');
+    });
+  });
+
+  window.addEventListener('appinstalled', function(){
+    pwaBtn.classList.remove('show');
+    deferredPrompt = null;
+  });
 })();
 </script>
 </body>
