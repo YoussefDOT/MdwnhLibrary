@@ -1,4 +1,4 @@
-const CACHE = 'mdwnh-lib-v3';
+const CACHE = 'mdwnh-lib-v4';
 const ASSETS = [
   './',
   './index.html',
@@ -9,7 +9,9 @@ const ASSETS = [
   './assets/paper.png',
   './assets/favicon.png',
   './assets/icon-192.png',
-  './assets/icon-512.png'
+  './assets/icon-512.png',
+  './assets/icon-maskable.png',
+  './assets/apple-touch-icon.png'
 ];
 
 self.addEventListener('install', (e) => {
