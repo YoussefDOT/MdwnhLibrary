@@ -110,9 +110,10 @@
   .sun{
     flex:0 0 auto;width:clamp(96px,14vw,132px);height:auto;
     filter:drop-shadow(0 10px 26px rgba(0,0,0,.28));
+    transform:scale(2);transform-origin:center;
     animation:sunPulse 6s var(--ease) infinite;
   }
-  @keyframes sunPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+  @keyframes sunPulse{0%,100%{transform:scale(2)}50%{transform:scale(2.08)}}
 
   .badr-body{flex:1 1 auto;min-width:0}
   .badr-kicker{
