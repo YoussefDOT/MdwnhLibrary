@@ -171,7 +171,7 @@
 
   .grid{display:grid;gap:clamp(14px,2vw,20px)}
   .grid.main{grid-template-columns:repeat(3,1fr)}
-  .grid.coord{grid-template-columns:repeat(2,1fr);margin-top:4px}
+  .grid.coord{grid-template-columns:repeat(3,1fr);margin-top:4px}
 
   /* ---------- big buttons ---------- */
   .btn{
@@ -225,9 +225,9 @@
     background:linear-gradient(135deg,var(--c),color-mix(in srgb,var(--c) 65%,#fff));
   }
   .cbtn .chip i{width:24px;height:24px;background:#fff;display:block;-webkit-mask:var(--g) no-repeat center/contain;mask:var(--g) no-repeat center/contain}
-  .cbtn .txt{flex:1}
-  .cbtn .name{font-size:clamp(1rem,2.6vw,1.2rem);font-weight:800}
-  .cbtn .desc{font-size:.82rem;font-weight:500;color:#8b847b;margin-top:2px}
+  .cbtn .txt{flex:1;min-width:0}
+  .cbtn .name{display:block;font-size:clamp(1rem,2.6vw,1.2rem);font-weight:800}
+  .cbtn .desc{display:block;font-size:.82rem;font-weight:500;color:#8b847b;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .cbtn .arrow{width:18px;height:18px;opacity:.4;transition:transform .4s var(--ease)}
   .cbtn:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);border-color:transparent}
   .cbtn:hover .arrow{transform:translateX(-5px)}
@@ -284,6 +284,7 @@
   @media(max-width:820px){
     .grid.main{grid-template-columns:1fr 1fr}
     .btn.b3{grid-column:1 / -1;min-height:120px}
+    .grid.coord{grid-template-columns:1fr}
   }
   @media(max-width:560px){
     .grid.main{grid-template-columns:1fr}
@@ -391,7 +392,16 @@
   </div>
 
   <nav class="grid coord" aria-label="روابط فريق التنسيق">
-    <a class="cbtn reveal" style="--c:var(--gold);--g:url('assets/icons/hash.png');--d:.70s" href="https://mdwn.studio/analytics/">
+    <a class="cbtn reveal" style="--c:var(--blue);--g:url('assets/icons/swash.png');--d:.70s" href="https://youssefdot.github.io/MdwnhNewsDesigner/">
+      <span class="chip"><i></i></span>
+      <span class="txt">
+        <span class="name">استوديو الصحافة</span>
+        <span class="desc">تصميم وإخراج الأخبار</span>
+      </span>
+      <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </a>
+
+    <a class="cbtn reveal" style="--c:var(--gold);--g:url('assets/icons/hash.png');--d:.78s" href="https://mdwn.studio/analytics/">
       <span class="chip"><i></i></span>
       <span class="txt">
         <span class="name">صفحة الإحصائيات</span>
@@ -400,14 +410,14 @@
       <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
     </a>
 
-    <span class="cbtn wip reveal" style="--c:var(--gold);--g:url('assets/icons/asterisk.png');--d:.78s" role="link" aria-disabled="true" title="قيد التطوير">
+    <a class="cbtn reveal" style="--c:var(--teal);--g:url('assets/icons/asterisk.png');--d:.86s" href="https://mdwntnseq.carrd.co">
       <span class="chip"><i></i></span>
       <span class="txt">
-        <span class="name">جدول النشر</span>
-        <span class="desc">قريبًا — تنظيم مواعيد النشر</span>
+        <span class="name">أدوات التنسيق</span>
+        <span class="desc">روابط وأدوات فريق التنسيق</span>
       </span>
-      <span class="badge">تحت التطوير</span>
-    </span>
+      <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </a>
   </nav>
 
   <!-- ===== paper ===== -->
