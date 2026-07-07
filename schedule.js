@@ -334,7 +334,7 @@
 
     const maxPills = mobile ? 3 : 2;
     const pills = dayTasks.slice(0, maxPills).map((t) =>
-      '<span class="ps-pill" style="--pc:' + tagColor((t.tags || [])[0]) + '"><b>' +
+      '<span class="ps-pill' + (t.done ? ' done' : '') + '" style="--pc:' + tagColor((t.tags || [])[0]) + '"><b>' +
       esc(t.name) + '</b></span>').join('') +
       (dayTasks.length > maxPills
         ? '<span class="ps-pill more">+' + (dayTasks.length - maxPills).toLocaleString('ar-EG') + ' أخرى</span>' : '');

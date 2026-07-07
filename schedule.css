@@ -133,6 +133,12 @@ body.ps-lock{overflow:hidden}
 }
 .ps-pill b{font-weight:800;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .ps-pill.more{color:#8b847b;justify-content:center;border-inline-start-color:transparent;font-weight:700;background:rgba(38,38,38,.04)}
+.ps-pill.done{border-inline-start-color:#c9c3b8;background:#f7f5f1}
+.ps-pill.done b{
+  color:#a49c90;
+  text-decoration:line-through;text-decoration-style:dashed;
+  text-decoration-color:#a49c90;text-decoration-thickness:1.5px;
+}
 
 /* photos tucked into the bottom-left corner (out of the way of task text/avatars) */
 .ps-mid{position:absolute;left:6px;bottom:6px;z-index:2;display:flex;align-items:flex-end;gap:3px}
