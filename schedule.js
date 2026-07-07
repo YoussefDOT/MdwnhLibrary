@@ -51,6 +51,11 @@
   const esc = (s) => String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+  // normalize Arabic-Indic (٠-٩) and Extended Arabic-Indic (۰-۹) digits to ASCII
+  const normDigits = (s) => String(s == null ? '' : s)
+    .replace(/[٠-٩]/g, (d) => d.charCodeAt(0) - 0x0660)
+    .replace(/[۰-۹]/g, (d) => d.charCodeAt(0) - 0x06F0);
+
   const dateKey = (y, m, d) =>
     y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
   const keyToDate = (k) => {
@@ -140,7 +145,12 @@
       <div class="ps-sub-body">
         <h3 style="margin-bottom:4px">خيارات القائد</h3>
         <p>أدخل كلمة المرور لفتح إدارة الجدول</p>
-        <input class="ps-pass-input" id="psPassInput" type="password" autocomplete="off" inputmode="numeric" placeholder="••••" />
+        <div class="ps-pin" id="psPin" dir="ltr">
+          <input class="ps-pin-box" type="password" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="الرقم الأول" />
+          <input class="ps-pin-box" type="password" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="الرقم الثاني" />
+          <input class="ps-pin-box" type="password" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="الرقم الثالث" />
+          <input class="ps-pin-box" type="password" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="الرقم الرابع" />
+        </div>
       </div>
       <div class="ps-sub-foot">
         <button class="ps-btn ghost" data-close="psPass">إلغاء</button>
@@ -738,29 +748,50 @@
     document.body.classList.toggle('ps-admin', isAdmin);
     renderCalendar();
   }
+  const pinBoxes = () => [...document.querySelectorAll('#psPin .ps-pin-box')];
+  const readPin = () => normDigits(pinBoxes().map((b) => b.value).join(''));
+  function clearPin() { pinBoxes().forEach((b) => { b.value = ''; b.classList.remove('err'); }); }
+  function focusFirstPin() { const f = pinBoxes()[0]; if (f) f.focus(); }
+
+  pinBoxes().forEach((box, i, arr) => {
+    box.addEventListener('input', () => {
+      box.value = normDigits(box.value).replace(/\D/g, '').slice(-1);
+      if (box.value && i < arr.length - 1) arr[i + 1].focus();
+      if (arr.every((b) => b.value)) tryPass();
+    });
+    box.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && !box.value && i > 0) { arr[i - 1].focus(); }
+      else if (e.key === 'Enter') { tryPass(); }
+    });
+    box.addEventListener('paste', (e) => {
+      e.preventDefault();
+      const src = (e.clipboardData || window.clipboardData).getData('text');
+      const digits = normDigits(src).replace(/\D/g, '').slice(0, arr.length);
+      arr.forEach((b, j) => { b.value = digits[j] || ''; });
+      arr[Math.min(digits.length, arr.length - 1)].focus();
+      if (arr.every((b) => b.value)) tryPass();
+    });
+  });
+
   $('psLeaderBtn').addEventListener('click', () => {
-    $('psPassInput').value = '';
-    $('psPassInput').classList.remove('err');
+    clearPin();
     openLayer('psPass');
-    setTimeout(() => $('psPassInput').focus(), 80);
+    setTimeout(focusFirstPin, 80);
   });
   function tryPass() {
-    if ($('psPassInput').value === PASSWORD) {
+    if (readPin() === PASSWORD) {
       isAdmin = true;
       sessionStorage.setItem('psAdmin', '1');
       closeLayer('psPass');
+      clearPin();
       applyAdmin();
       toast('أهلًا أيها القائد ✦ اضغط أي يوم لإضافة مهمة');
-    } else {
-      const inp = $('psPassInput');
-      inp.classList.remove('err');
-      void inp.offsetWidth; // restart shake
-      inp.classList.add('err');
-      inp.select();
+    } else if (pinBoxes().every((b) => b.value)) {
+      pinBoxes().forEach((b) => b.classList.add('err'));
+      setTimeout(() => { clearPin(); focusFirstPin(); }, 450);
     }
   }
   $('psPassGo').addEventListener('click', tryPass);
-  $('psPassInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') tryPass(); });
   $('psLogout').addEventListener('click', () => {
     isAdmin = false;
     sessionStorage.removeItem('psAdmin');
