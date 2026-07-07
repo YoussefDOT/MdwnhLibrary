@@ -38,10 +38,7 @@
   let view = { y: today.getFullYear(), m: today.getMonth() };
   let customTags = {};
   let tasks = {};
-  let prevTasks = null;                  // for new-task notification diffing
   let isAdmin = sessionStorage.getItem('psAdmin') === '1';
-  let notifyMe = localStorage.getItem('psNotifyMe') || null;
-  let notifySel = null;
   let db = null, fb = null, fbStarted = false;
   let sheetDate = null;                  // date key of the open day sheet
   let editing = null;                    // { id, date, tags:Set, members:Set, photos:[] }
@@ -62,7 +59,6 @@
     const p = k.split('-').map(Number);
     return new Date(p[0], p[1] - 1, p[2]);
   };
-  const todayKey = dateKey(today.getFullYear(), today.getMonth(), today.getDate());
   const sameDay = (a, b) =>
     a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
@@ -131,10 +127,6 @@
           خيارات القائد
         </button>
         <span class="ps-admin-chip">✦ وضع القائد مفعّل <button id="psLogout">خروج</button></span>
-        <button class="ps-notify-btn" id="psNotifyBtn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
-          <span id="psNotifyLabel">تفعيل الإشعارات</span>
-        </button>
       </div>
     </div>
   </div>
@@ -252,25 +244,6 @@
     </div>
   </div>
 
-  <div class="ps-overlay" id="psNotify" role="dialog" aria-modal="true" aria-label="إشعاراتي">
-    <div class="ps-sub">
-      <div class="ps-sub-head">
-        <h3>إشعاراتي 🔔</h3>
-        <button class="ps-close" data-close="psNotify" aria-label="إغلاق">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-        </button>
-      </div>
-      <div class="ps-sub-body">
-        <p class="ps-notify-lead">اختر اسمك — وستصلك إشعارات عند إسناد مهمة جديدة إليك، وعند حلول موعد مهمة اليوم.</p>
-        <div class="ps-memgrid" id="psNotifyGrid"></div>
-      </div>
-      <div class="ps-sub-foot">
-        <button class="ps-btn ghost" data-close="psNotify">إلغاء</button>
-        <button class="ps-btn primary" id="psNotifyGo">تفعيل ✓</button>
-      </div>
-    </div>
-  </div>
-
   <div class="ps-toast" id="psToast"></div>`;
   document.body.appendChild(root);
 
@@ -325,9 +298,7 @@
       fb.onValue(fb.ref(db, ROOT), (snap) => {
         const v = snap.val() || {};
         customTags = v.customTags || {};
-        const nextTasks = v.tasks || {};
-        runNotify(nextTasks);
-        tasks = nextTasks;
+        tasks = v.tasks || {};
         renderCalendar();
         if (sheetDate && $('psSheet').classList.contains('open')) renderSheet(sheetDate);
         if (editing && $('psEditor').classList.contains('open')) renderEdTags();
@@ -798,100 +769,6 @@
     applyAdmin();
     toast('خرجت من وضع القائد');
   });
-
-  /* ---------- notifications ---------- */
-  function updateNotifyUI() {
-    const btn = $('psNotifyBtn');
-    const label = $('psNotifyLabel');
-    if (notifyMe) {
-      btn.classList.add('active');
-      label.textContent = 'إشعارات: ' + notifyMe;
-    } else {
-      btn.classList.remove('active');
-      label.textContent = 'تفعيل الإشعارات';
-    }
-  }
-  $('psNotifyBtn').addEventListener('click', () => {
-    if (notifyMe) {
-      if (confirm('هل تريد إيقاف الإشعارات وإعادة الضبط؟')) {
-        notifyMe = null;
-        localStorage.removeItem('psNotifyMe');
-        updateNotifyUI();
-        toast('أُوقفت الإشعارات');
-      }
-    } else {
-      openNotifyPicker();
-    }
-  });
-  function openNotifyPicker() {
-    notifySel = notifyMe || null;
-    renderNotifyGrid();
-    openLayer('psNotify');
-  }
-  function renderNotifyGrid() {
-    $('psNotifyGrid').innerHTML = MEMBERS.map((n) =>
-      '<button type="button" class="ps-memcard' + (notifySel === n ? ' sel' : '') +
-      '" data-nmem="' + esc(n) + '"><span class="tick">✓</span><img src="' + avatarUrl(n) +
-      '" alt="" loading="lazy" /><span>' + esc(n) + '</span></button>').join('');
-    $('psNotifyGrid').querySelectorAll('[data-nmem]').forEach((b) =>
-      b.addEventListener('click', () => { notifySel = b.dataset.nmem; renderNotifyGrid(); }));
-  }
-  $('psNotifyGo').addEventListener('click', () => {
-    if (!notifySel) { toast('اختر اسمك أولًا'); return; }
-    if (!('Notification' in window)) { toast('جهازك لا يدعم الإشعارات'); return; }
-    Notification.requestPermission().then((p) => {
-      if (p === 'granted') {
-        notifyMe = notifySel;
-        localStorage.setItem('psNotifyMe', notifyMe);
-        updateNotifyUI();
-        closeLayer('psNotify');
-        toast('✔ ستصلك إشعارات مهامك يا ' + notifyMe);
-        prevTasks = null;          // re-baseline so we don't spam existing tasks
-        runNotify(tasks);          // fires today's due-tasks immediately
-      } else {
-        toast('لم يُسمح بالإشعارات من المتصفح');
-      }
-    }).catch(() => toast('تعذّر تفعيل الإشعارات'));
-  });
-
-  function sysNotify(title, body) {
-    if (!('Notification' in window) || Notification.permission !== 'granted') return;
-    try { new Notification(title, { body, icon: 'assets/icon-192.png' }); } catch (_) {}
-  }
-  function runNotify(nextTasks) {
-    if (notifyMe && prevTasks) {
-      Object.keys(nextTasks).forEach((id) => {
-        const t = nextTasks[id];
-        if (!t || !t.date) return;
-        const now = (t.members || []).includes(notifyMe);
-        const before = prevTasks[id] && (prevTasks[id].members || []).includes(notifyMe);
-        if (now && !before) sysNotify('📋 مهمة جديدة لك', t.name);
-      });
-    }
-    prevTasks = nextTasks;
-    checkDueToday(nextTasks);
-  }
-  function checkDueToday(src) {
-    if (!notifyMe) return;
-    const storeKey = 'psDue_' + todayKey;
-    let done;
-    try { done = JSON.parse(localStorage.getItem(storeKey) || '[]'); } catch (_) { done = []; }
-    // prune stale due-keys from previous days
-    for (let i = localStorage.length - 1; i >= 0; i--) {
-      const k = localStorage.key(i);
-      if (k && k.indexOf('psDue_') === 0 && k !== storeKey) localStorage.removeItem(k);
-    }
-    Object.keys(src).forEach((id) => {
-      const t = src[id];
-      if (!t || t.date !== todayKey) return;
-      if (!(t.members || []).includes(notifyMe)) return;
-      if (done.includes(id)) return;
-      sysNotify('⏰ مهمة اليوم', t.name + ' — مستحقة اليوم');
-      done.push(id);
-    });
-    try { localStorage.setItem(storeKey, JSON.stringify(done)); } catch (_) {}
-  }
-  updateNotifyUI();
 
   /* ---------- entry point ---------- */
   const trigger = document.getElementById('openSchedule');

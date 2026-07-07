@@ -183,27 +183,9 @@ body.ps-lock{overflow:hidden}
 body.ps-admin .ps-admin-chip{display:inline-flex}
 body.ps-admin .ps-leader-btn{display:none}
 
-/* notifications toggle */
-.ps-notify-btn{
-  display:inline-flex;align-items:center;gap:8px;
-  font-family:inherit;font-size:.85rem;font-weight:700;color:#8b847b;cursor:pointer;
-  background:#fff;border:1.5px solid rgba(38,38,38,.12);border-radius:999px;
-  padding:9px 18px;transition:all .3s var(--ease);
-}
-.ps-notify-btn svg{width:16px;height:16px}
-.ps-notify-btn:hover{color:var(--ink);border-color:var(--blue);background:rgba(11,110,185,.06)}
-.ps-notify-btn.active{color:#fff;background:linear-gradient(135deg,var(--blue),#0a5c9a);border-color:transparent;box-shadow:0 8px 20px -10px rgba(11,110,185,.85)}
-.ps-notify-btn.active svg{animation:psBellRing 3.2s var(--ease) infinite}
-@keyframes psBellRing{
-  0%,86%,100%{transform:rotate(0)}
-  89%{transform:rotate(13deg)}
-  93%{transform:rotate(-11deg)}
-  97%{transform:rotate(6deg)}
-}
-
-/* ---------- sub panels (password / sheet / editor / members / notify / crop) ---------- */
+/* ---------- sub panels (password / sheet / editor / members / crop) ---------- */
 #psPass,#psSheet,#psEditor{z-index:110}
-#psMembers,#psNotify{z-index:120}
+#psMembers{z-index:120}
 #psCrop{z-index:130}
 .ps-sub{
   background:#fafafa;border-radius:24px;
@@ -418,7 +400,7 @@ html[dir="rtl"] .ps-mem{padding:3px 3px 3px 10px}
 .ps-crophint{text-align:center;font-size:.74rem;color:#9a938a;font-weight:600;margin-top:8px}
 
 /* ---------- members picker ---------- */
-#psMembers .ps-sub,#psNotify .ps-sub{width:min(600px,100%)}
+#psMembers .ps-sub{width:min(600px,100%)}
 .ps-memgrid{
   display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:10px;
 }
@@ -439,10 +421,6 @@ html[dir="rtl"] .ps-mem{padding:3px 3px 3px 10px}
   box-shadow:0 3px 8px -2px rgba(65,185,166,.9);
 }
 .ps-memcard.sel .tick{display:grid}
-/* notify picker uses blue accent */
-#psNotify .ps-memcard.sel{border-color:var(--blue);background:rgba(11,110,185,.08)}
-#psNotify .ps-memcard.sel .tick{background:var(--blue)}
-.ps-notify-lead{font-size:.85rem;font-weight:600;color:#8b847b;margin-bottom:10px}
 
 /* ---------- toast ---------- */
 .ps-toast{
@@ -485,5 +463,5 @@ html[dir="rtl"] .ps-mem{padding:3px 3px 3px 10px}
 }
 
 @media(prefers-reduced-motion:reduce){
-  .ps-overlay .ps-panel,.badge.new,.ps-lockart,.ps-avs img,.ps-notify-btn.active svg{animation:none!important}
+  .ps-overlay .ps-panel,.badge.new,.ps-lockart,.ps-avs img{animation:none!important}
 }

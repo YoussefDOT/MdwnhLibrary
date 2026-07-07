@@ -1,4 +1,4 @@
-const CACHE = 'mdwnh-lib-v9';
+const CACHE = 'mdwnh-lib-v10';
 const ASSETS = [
   './',
   './index.html',
