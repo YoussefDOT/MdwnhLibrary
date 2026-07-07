@@ -1,7 +1,9 @@
-const CACHE = 'mdwnh-lib-v6';
+const CACHE = 'mdwnh-lib-v8';
 const ASSETS = [
   './',
   './index.html',
+  './schedule.css',
+  './schedule.js',
   './manifest.webmanifest',
   './assets/brand-logo.svg',
   './assets/badr-bg.png',

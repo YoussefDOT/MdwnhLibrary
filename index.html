@@ -16,6 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="schedule.css" />
 <style>
   :root{
     --snow:#faf9f7;
@@ -401,6 +402,15 @@
       <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
     </a>
 
+    <button class="cbtn reveal" id="openSchedule" type="button" style="--c:var(--red);--g:url('assets/icons/sparkles.png');--d:.74s">
+      <span class="chip"><i></i></span>
+      <span class="txt">
+        <span class="name">جدول النشر <span class="badge new">جديد</span></span>
+        <span class="desc">تقويم المحتوى الشهري للفريق</span>
+      </span>
+      <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+
     <a class="cbtn reveal" style="--c:var(--gold);--g:url('assets/icons/hash.png');--d:.78s" href="https://mdwn.studio/analytics/">
       <span class="chip"><i></i></span>
       <span class="txt">
@@ -547,5 +557,6 @@
   });
 })();
 </script>
+<script src="schedule.js" defer></script>
 </body>
 </html>
