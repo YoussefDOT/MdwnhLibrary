@@ -16,6 +16,18 @@
     'd-event': { name: 'فعالية', color: '#41b9a6' }
   };
 
+  /* preloaded so marking a task done plays instantly, no fetch/decode lag */
+  const doneSound = new Audio('Paper_Task_Complete.mp3');
+  doneSound.preload = 'auto';
+  try { doneSound.load(); } catch (_) {}
+  function playDoneSound() {
+    try {
+      doneSound.currentTime = 0;
+      const p = doneSound.play();
+      if (p && p.catch) p.catch(() => {});
+    } catch (_) {}
+  }
+
   const MEMBERS = [
     'ابو مزاحم','الشعيرة','أبو بندر','جمانة','خالد حسن','خالد','رجب','سحاب',
     'سراج','سعيد','شارد','شفق','طه','عاصم','علي مجدي','عمر','فرات','مايتو',
@@ -314,10 +326,11 @@
     const key = dateKey(d.getFullYear(), d.getMonth(), d.getDate());
     const dayTasks = byDate[key] || [];
     const isToday = sameDay(d, today);
+    const allDone = dayTasks.length > 0 && dayTasks.every((t) => t.done);
 
     const colors = [];
-    dayTasks.forEach((t) => (t.tags || []).forEach((tg) => colors.push(tagColor(tg))));
-    const tint = cellTint(colors);
+    if (!allDone) dayTasks.forEach((t) => (t.tags || []).forEach((tg) => colors.push(tagColor(tg))));
+    const tint = allDone ? '' : cellTint(colors);
 
     const maxPills = mobile ? 3 : 2;
     const pills = dayTasks.slice(0, maxPills).map((t) =>
@@ -342,7 +355,7 @@
 
     const clickable = !out && (isAdmin || dayTasks.length);
     return '<div class="ps-cell' + (out ? ' out' : '') + (isToday ? ' today' : '') +
-      (clickable ? ' clickable' : '') + '" data-date="' + key + '"' +
+      (clickable ? ' clickable' : '') + (allDone ? ' done-day' : '') + '" data-date="' + key + '"' +
       (tint ? ' style="background:' + tint + ',#fff"' : '') + '>' +
       '<div class="ps-cellhead"><span class="wd">' + WEEKDAYS[d.getDay()] + '</span><span class="gd">' +
       d.getDate().toLocaleString('ar-EG') + '</span><span class="hj">' + fmtHijriDay.format(d) + '</span></div>' +
@@ -434,8 +447,10 @@
           ? '<div class="ps-cardbtns"><button class="ps-mini-btn" data-edit="' + t.id + '">✏️ تعديل</button>' +
             '<button class="ps-mini-btn del" data-del="' + t.id + '">🗑 حذف</button></div>'
           : '';
-        return '<div class="ps-taskcard" style="--tc:' + tagColor((t.tags || [])[0]) + '">' +
-          '<h4>' + esc(t.name) + '</h4>' +
+        const doneBtn = '<button type="button" class="ps-done-btn' + (t.done ? ' on' : '') +
+          '" data-done="' + t.id + '">' + (t.done ? '✓ تم' : 'تم') + '</button>';
+        return '<div class="ps-taskcard' + (t.done ? ' done' : '') + '" style="--tc:' + tagColor((t.tags || [])[0]) + '">' +
+          '<div class="ps-taskhead"><h4>' + esc(t.name) + '</h4>' + doneBtn + '</div>' +
           '<div class="ps-tagrow">' + tags + '</div>' +
           '<div class="ps-memrow">' + mems + '</div>' + phs + btns + '</div>';
       }).join('');
@@ -455,6 +470,17 @@
         fb.remove(fb.ref(db, ROOT + '/tasks/' + b.dataset.del))
           .then(() => toast('حُذفت المهمة'))
           .catch(() => toast('تعذّر الحذف — حاول مجددًا'));
+      }));
+    body.querySelectorAll('[data-done]').forEach((b) =>
+      b.addEventListener('click', () => {
+        if (!fb || !db) { toast('لحظة… يتم الاتصال بقاعدة البيانات'); return; }
+        const id = b.dataset.done;
+        const t = tasks[id];
+        if (!t) return;
+        const nowDone = !t.done;
+        fb.update(fb.ref(db, ROOT + '/tasks/' + id), { done: nowDone })
+          .then(() => { if (nowDone) playDoneSound(); })
+          .catch(() => toast('تعذّر تحديث الحالة — حاول مجددًا'));
       }));
   }
 

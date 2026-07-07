@@ -1,9 +1,10 @@
-const CACHE = 'mdwnh-lib-v10';
+const CACHE = 'mdwnh-lib-v11';
 const ASSETS = [
   './',
   './index.html',
   './schedule.css',
   './schedule.js',
+  './Paper_Task_Complete.mp3',
   './manifest.webmanifest',
   './assets/brand-logo.svg',
   './assets/badr-bg.png',

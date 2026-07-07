@@ -104,6 +104,16 @@ body.ps-lock{overflow:hidden}
 .ps-cell.clickable:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);z-index:2}
 .ps-cell.out{opacity:.35;pointer-events:none}
 .ps-cell.today{border-color:var(--gold);border-width:2px;box-shadow:0 0 0 3px rgba(243,192,43,.25)}
+.ps-cell.done-day{background:#efece6}
+.ps-cell.done-day::after{
+  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;border-radius:inherit;
+  background-image:repeating-linear-gradient(-38deg,rgba(255,255,255,.62) 0 10px,transparent 10px 24px);
+}
+.ps-cell.done-day .ps-pill,
+.ps-cell.done-day .ps-ph img,
+.ps-cell.done-day .ps-avs img{filter:grayscale(65%);opacity:.72}
+.ps-cell.done-day .gd,
+.ps-cell.done-day .hj{opacity:.55}
 .ps-cellhead{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:1px 4px}
 .ps-cell .wd{display:none;flex-basis:100%;font-size:.62rem;font-weight:800;color:#9a938a;line-height:1}
 .ps-cell .gd{font-size:.95rem;font-weight:800;line-height:1.1}
@@ -242,7 +252,20 @@ body.ps-admin .ps-leader-btn{display:none}
   padding:14px 16px 14px;margin-bottom:12px;
 }
 .ps-taskcard::before{content:"";position:absolute;inset-block:0;inset-inline-start:0;width:5px;background:var(--tc,var(--gold))}
-.ps-taskcard h4{font-size:1.05rem;font-weight:900;margin-bottom:9px}
+.ps-taskcard.done{opacity:.68}
+.ps-taskhead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:9px}
+.ps-taskcard h4{font-size:1.05rem;font-weight:900}
+.ps-taskcard.done h4{text-decoration:line-through;text-decoration-thickness:2px}
+.ps-done-btn{
+  flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;
+  font-family:inherit;font-size:.76rem;font-weight:800;cursor:pointer;
+  border:1.5px solid #2fae60;color:#2fae60;background:#fff;
+  border-radius:999px;padding:6px 14px;
+  transition:all .25s var(--ease);
+}
+.ps-done-btn:hover{background:rgba(47,174,96,.1);transform:translateY(-1px)}
+.ps-done-btn.on{background:#2fae60;color:#fff;border-color:#2fae60;box-shadow:0 6px 14px -6px rgba(47,174,96,.75)}
+.ps-done-btn.on:hover{background:#279456}
 .ps-tagrow{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
 .ps-tag{
   display:inline-flex;align-items:center;gap:5px;
