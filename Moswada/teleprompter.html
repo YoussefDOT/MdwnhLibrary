@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>القارئ — مِرصاد</title>
+<style>
+  @font-face {
+    font-family: 'ThmanyahSans';
+    src: url('fonts/thmanyahsansLight.otf') format('opentype');
+    font-weight: 300;
+  }
+  @font-face {
+    font-family: 'ThmanyahSans';
+    src: url('fonts/thmanyahsansRegular.otf') format('opentype');
+    font-weight: 400;
+  }
+  @font-face {
+    font-family: 'ThmanyahSans';
+    src: url('fonts/thmanyahsansMedium.otf') format('opentype');
+    font-weight: 500;
+  }
+  @font-face {
+    font-family: 'ThmanyahSans';
+    src: url('fonts/thmanyahsansBold.otf') format('opentype');
+    font-weight: 700;
+  }
+  @font-face {
+    font-family: 'ThmanyahSans';
+    src: url('fonts/thmanyahsansBlack.otf') format('opentype');
+    font-weight: 900;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; background: #000; color: #fff; font-family: 'ThmanyahSans', -apple-system, 'Geeza Pro', 'Arabic UI Text', 'Traditional Arabic', 'Helvetica Neue', Arial, sans-serif; overflow: hidden; user-select: none; }
+
+  #scroll {
+    position: absolute; inset: 0;
+    overflow: hidden;
+    padding: calc(60px + env(safe-area-inset-top)) 10% calc(60px + env(safe-area-inset-bottom));
+    padding-left: calc(10% + env(safe-area-inset-left));
+    padding-right: calc(10% + env(safe-area-inset-right));
+    transform: scaleX(-1);
+  }
+  #text {
+    font-family: 'ThmanyahSans', -apple-system, 'Geeza Pro', 'Arabic UI Text', 'Traditional Arabic', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 52px; font-weight: 500; line-height: 1.7; text-align: center;
+    color: #fff; white-space: pre-wrap; word-break: break-word;
+  }
+  #text * { font-size: inherit !important; line-height: inherit !important; color: inherit !important; background: transparent !important; }
+
+  /* Fade masks top & bottom */
+  #scroll::before, #scroll::after {
+    content: ''; position: absolute; left: 0; right: 0; height: 80px; z-index: 2; pointer-events: none;
+  }
+  #scroll::before { top: 0;    background: linear-gradient(to bottom, #000, transparent); }
+  #scroll::after  { bottom: 0; background: linear-gradient(to top,    #000, transparent); }
+
+  /* Center line */
+  #centerLine {
+    position: absolute; left: 0; right: 0; top: 50%; height: 3px;
+    background: rgba(10,132,255,0.35); z-index: 3; pointer-events: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+</style>
+</head>
+<body>
+<div id="centerLine"></div>
+<div id="scroll"><div id="text">جارٍ التحميل…</div></div>
+
+<script>
+  const ch = new BroadcastChannel('musawwir-teleprompter');
+  let playing = false, speed = 1, fontSize = 52, scrollY = 0, raf = null;
+
+  const scroll = document.getElementById('scroll');
+  const textEl = document.getElementById('text');
+
+  function applyFont(v) {
+    fontSize = v;
+    textEl.style.fontSize = v + 'px';
+  }
+
+  function tick() {
+    if (!playing) return;
+    scrollY += speed * 0.6;
+    scroll.scrollTop = scrollY;
+    const pct = scroll.scrollHeight > scroll.clientHeight
+      ? scrollY / (scroll.scrollHeight - scroll.clientHeight) : 0;
+    ch.postMessage({ cmd: 'pos', pct });
+    if (scrollY < scroll.scrollHeight) raf = requestAnimationFrame(tick);
+    else { playing = false; }
+  }
+
+  // Allow-list sanitizer: keep only formatting tags, drop event handlers,
+  // scripts and dangerous elements. The text arrives over a same-origin
+  // BroadcastChannel but ultimately originates from untrusted stored content.
+  const TP_ALLOWED_TAGS = new Set(['P','BR','DIV','SPAN','B','STRONG','I','EM','U','S','STRIKE','SUB','SUP','FONT','BLOCKQUOTE','UL','OL','LI','H1','H2','H3','H4','H5','H6','MARK','SMALL']);
+  const TP_ALLOWED_ATTRS = new Set(['style','color','align','dir']);
+  function tpSanitize(html) {
+    const doc = new DOMParser().parseFromString(String(html || ''), 'text/html');
+    const walk = (node) => {
+      for (const child of Array.from(node.childNodes)) {
+        if (child.nodeType === 1) {
+          const tag = String(child.tagName).toUpperCase();
+          if (!TP_ALLOWED_TAGS.has(tag)) {
+            if (['SCRIPT','STYLE','IFRAME','OBJECT','EMBED','LINK','META','SVG','MATH','A'].includes(tag)) {
+              child.remove();
+            } else {
+              while (child.firstChild) node.insertBefore(child.firstChild, child);
+              child.remove();
+            }
+            continue;
+          }
+          for (const attr of Array.from(child.attributes)) {
+            const name = attr.name.toLowerCase();
+            if (!TP_ALLOWED_ATTRS.has(name)) { child.removeAttribute(attr.name); continue; }
+            if (name === 'style' && /url\s*\(|expression|javascript:|@import|behavior:/i.test(attr.value)) child.removeAttribute(attr.name);
+          }
+          walk(child);
+        } else if (child.nodeType === 8) {
+          child.remove();
+        }
+      }
+    };
+    walk(doc.body);
+    return doc.body.innerHTML;
+  }
+
+  function handleCmd(d) {
+    if (d.cmd === 'load') {
+      if (/<[a-z][\s\S]*>/i.test(d.text)) {
+        textEl.innerHTML = tpSanitize(d.text);
+      } else {
+        textEl.textContent = d.text;
+      }
+      scrollY = 0; scroll.scrollTop = 0;
+      if (d.fontSize) applyFont(d.fontSize);
+      if (d.speed) speed = d.speed;
+    }
+    if (d.cmd === 'pos') {
+      playing = false; if (raf) { cancelAnimationFrame(raf); raf = null; }
+      const max = scroll.scrollHeight - scroll.clientHeight;
+      if (max > 0) { scrollY = d.pct * max; scroll.scrollTop = scrollY; }
+    }
+    if (d.cmd === 'play') {
+      playing = true;
+      tick();
+    }
+    if (d.cmd === 'pause') {
+      playing = false; if (raf) { cancelAnimationFrame(raf); raf = null; }
+    }
+    if (d.cmd === 'reset') {
+      playing = false; if (raf) { cancelAnimationFrame(raf); raf = null; }
+      scrollY = 0; scroll.scrollTop = 0;
+    }
+    if (d.cmd === 'speed') { speed = d.val; }
+    if (d.cmd === 'fontSize') applyFont(d.val);
+    if (d.cmd === 'scrollStart') {
+      playing = false;
+      if (raf) cancelAnimationFrame(raf);
+      function manualScroll() {
+        scrollY += (d.dir === 'down' ? 1 : -1) * speed * 0.6;
+        scrollY = Math.max(0, scrollY);
+        scroll.scrollTop = scrollY;
+        raf = requestAnimationFrame(manualScroll);
+      }
+      raf = requestAnimationFrame(manualScroll);
+    }
+    if (d.cmd === 'scrollStop') { if (raf) { cancelAnimationFrame(raf); raf = null; } }
+    if (d.cmd === 'mirror') { scroll.style.transform = d.on ? 'scaleX(-1)' : 'none'; }
+  }
+
+  ch.onmessage = ({ data }) => handleCmd(data);
+  window.addEventListener('message', ({ data }) => { if (data && data.cmd) handleCmd(data); });
+</script>
+</body>
+</html>

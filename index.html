@@ -171,7 +171,7 @@
   .section-head .rule{flex:1;height:2px;border-radius:2px;background:linear-gradient(90deg,rgba(38,38,38,.14),transparent)}
 
   .grid{display:grid;gap:clamp(14px,2vw,20px)}
-  .grid.main{grid-template-columns:repeat(3,1fr)}
+  .grid.main{grid-template-columns:repeat(4,1fr)}
   .grid.coord{grid-template-columns:repeat(3,1fr);margin-top:4px}
 
   /* ---------- big buttons ---------- */
@@ -243,6 +243,14 @@
     padding:4px 10px;border-radius:999px;white-space:nowrap;
     box-shadow:0 4px 12px -4px rgba(243,192,43,.8);
   }
+  /* جديد tag on the gold مسودة button — white pill so it reads on yellow */
+  .btn .name .badge{
+    display:inline-block;vertical-align:middle;margin-inline-start:6px;
+    font-size:.6rem;padding:3px 9px;color:var(--badr-deep);background:#fff;
+    box-shadow:0 4px 12px -4px rgba(0,0,0,.25);
+    animation:badgePop 2.6s var(--ease) infinite;
+  }
+  @keyframes badgePop{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 
   /* ---------- paper ---------- */
   .paper-wrap{margin-top:clamp(30px,5vw,54px);text-align:center;line-height:0}
@@ -284,7 +292,6 @@
   /* ---------- responsive ---------- */
   @media(max-width:820px){
     .grid.main{grid-template-columns:1fr 1fr}
-    .btn.b3{grid-column:1 / -1;min-height:120px}
     .grid.coord{grid-template-columns:1fr}
   }
   @media(max-width:560px){
@@ -368,6 +375,13 @@
       <span class="row"><span class="chip"><i></i></span></span>
       <span class="name">مساحة العمل</span>
       <span class="go">ادخل المساحة <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></span>
+    </a>
+
+    <a class="btn b-moswada reveal" style="--c:var(--gold);--g:url('assets/icons/swash.png');--d:.42s" href="Moswada/">
+      <span class="glyph"></span>
+      <span class="row"><span class="chip"><i></i></span></span>
+      <span class="name">مسودة العمل <span class="badge new">جديد</span></span>
+      <span class="go">افتح المسودة <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></span>
     </a>
 
     <a class="btn b2 reveal" style="--c:var(--teal);--g:url('assets/icons/sparkles.png');--d:.46s" href="https://youssefdot.github.io/MdwnhPoints/">
