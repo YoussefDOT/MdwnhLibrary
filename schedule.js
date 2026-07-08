@@ -140,6 +140,7 @@
         </button>
         <span class="ps-admin-chip">✦ وضع القائد مفعّل <button id="psLogout">خروج</button></span>
       </div>
+      <div class="ps-loadoverlay" id="psLoadOverlay"></div>
       <div class="ps-loadtoast" id="psLoadToast" role="status" aria-live="polite">
         <span class="ps-spinner"></span><span>جاري تحميل الجدول</span>
       </div>
@@ -295,14 +296,18 @@
 
   let dataLoaded = false;
   function showLoadToast() {
+    const ov = $('psLoadOverlay');
     const el = $('psLoadToast');
+    ov.classList.add('show');
     el.classList.add('show');
-    requestAnimationFrame(() => el.classList.add('visible'));
+    requestAnimationFrame(() => { ov.classList.add('visible'); el.classList.add('visible'); });
   }
   function hideLoadToast() {
+    const ov = $('psLoadOverlay');
     const el = $('psLoadToast');
+    ov.classList.remove('visible');
     el.classList.remove('visible');
-    setTimeout(() => el.classList.remove('show'), 350);
+    setTimeout(() => { ov.classList.remove('show'); el.classList.remove('show'); }, 350);
   }
 
   /* ---------- firebase (lazy) ---------- */

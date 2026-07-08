@@ -464,21 +464,35 @@ html[dir="rtl"] .ps-mem{padding:3px 3px 3px 10px}
 }
 .ps-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* ---------- loading toast (scoped inside the calendar panel) ---------- */
+/* ---------- loading state (animated stripes + centered toast, scoped inside the calendar panel) ---------- */
+.ps-loadoverlay{
+  display:none;position:absolute;inset:0;z-index:6;pointer-events:none;
+  opacity:0;background-color:#faf7f0;
+  background-image:repeating-linear-gradient(-38deg,
+    rgba(243,192,43,.4) 0 16px,
+    rgba(255,255,255,.85) 16px 34px);
+  transition:opacity .35s var(--ease);
+}
+.ps-loadoverlay.show{display:block}
+.ps-loadoverlay.visible{opacity:1;animation:psStripeMove 1.6s linear infinite}
+@keyframes psStripeMove{
+  from{background-position:0 0}
+  to{background-position:-34px 0}
+}
 .ps-loadtoast{
-  display:none;position:absolute;right:16px;bottom:74px;z-index:5;
+  display:none;position:absolute;top:50%;left:50%;z-index:7;
   align-items:center;gap:10px;
-  background:#fff;color:var(--ink);font-size:.84rem;font-weight:700;
-  border-radius:999px;padding:10px 18px;box-shadow:var(--shadow-lg);
+  background:#fff;color:var(--ink);font-size:.92rem;font-weight:800;
+  border-radius:999px;padding:13px 24px;box-shadow:var(--shadow-lg);
   border:1.5px solid rgba(38,38,38,.08);
-  opacity:0;transform:translateY(12px);
+  opacity:0;transform:translate(-50%,-50%) scale(.92);
   transition:opacity .35s var(--ease),transform .35s var(--ease);
   pointer-events:none;
 }
 .ps-loadtoast.show{display:inline-flex}
-.ps-loadtoast.visible{opacity:1;transform:translateY(0)}
+.ps-loadtoast.visible{opacity:1;transform:translate(-50%,-50%) scale(1)}
 .ps-spinner{
-  width:16px;height:16px;border-radius:50%;flex:0 0 auto;
+  width:18px;height:18px;border-radius:50%;flex:0 0 auto;
   border:2.5px solid rgba(11,110,185,.18);border-top-color:var(--blue);
   animation:psSpin .75s linear infinite;
 }
@@ -514,5 +528,5 @@ html[dir="rtl"] .ps-mem{padding:3px 3px 3px 10px}
 }
 
 @media(prefers-reduced-motion:reduce){
-  .ps-overlay .ps-panel,.badge.new,.ps-lockart,.ps-avs img{animation:none!important}
+  .ps-overlay .ps-panel,.badge.new,.ps-lockart,.ps-avs img,.ps-loadoverlay.visible{animation:none!important}
 }
