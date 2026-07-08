@@ -3376,31 +3376,31 @@ document.addEventListener('DOMContentLoaded', function() {
   /* login barrier removed — never show the login wall */
   body:not(.auth-ready) #loginPage{display:none !important}
 
-  /* ── persistent top navbar: exit-to-hub + history + brand logo ── */
-  body{padding-top:52px}
-  .mnav{
-    position:fixed;inset-block-start:0;inset-inline:0;z-index:950;
-    height:52px;display:flex;align-items:center;justify-content:space-between;gap:14px;
-    padding:0 16px;background:rgba(28,28,30,.78);backdrop-filter:saturate(180%) blur(20px);
-    -webkit-backdrop-filter:saturate(180%) blur(20px);
-    border-bottom:1px solid rgba(255,255,255,.1);
-  }
-  html[data-theme="light"] .mnav{
-    background:rgba(250,249,247,.85);border-bottom-color:rgba(38,38,38,.09);
+  /* ── merged top navbar: hub-exit + history + app controls + logo ── */
+  .topbar.mtop{
+    justify-content:flex-start;gap:12px;overflow:visible;
+    background:rgba(250,249,247,.85);border-bottom:1px solid rgba(38,38,38,.09);
     box-shadow:0 1px 0 rgba(38,38,38,.06);
   }
+  .mtop-nav{display:flex;align-items:center;gap:8px;flex-shrink:0}
+  .mtop #topLeft{flex:1 1 auto;min-width:0}
+  .mtop #topRight{flex:0 0 auto}
+  .mtop-end{display:flex;align-items:center;gap:10px;flex-shrink:0}
+  /* branding lives in the logo at the end — hide the old 🎬 مِرصاد brand text */
+  .topbar .brand{display:none !important}
+
   .mnav-exit{
     display:flex;align-items:center;gap:8px;flex-shrink:0;
     font-family:'Baloo Bhaijaan 2',inherit;font-size:14px;font-weight:700;
     color:#fff;background:var(--mdwnh-red);border:none;border-radius:999px;
-    padding:9px 16px;cursor:pointer;
+    padding:9px 15px;cursor:pointer;
     box-shadow:0 4px 14px -4px rgba(229,75,42,.55);
     transition:transform .3s var(--mdwnh-bounce),box-shadow .3s var(--mdwnh-bounce);
   }
   .mnav-exit svg{width:15px;height:15px;flex-shrink:0}
   .mnav-exit:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 8px 20px -4px rgba(229,75,42,.65)}
   .mnav-exit:active{transform:scale(.95)}
-  .mnav-logo{height:26px;width:auto;position:absolute;inset-inline-start:50%;transform:translateX(50%);filter:drop-shadow(0 2px 6px rgba(0,0,0,.18))}
+  .mnav-logo{height:26px;width:auto;flex-shrink:0;filter:drop-shadow(0 2px 6px rgba(38,38,38,.14))}
   .mnav-hist{display:flex;align-items:center;gap:6px;flex-shrink:0}
   .mnav-arrow{
     display:flex;align-items:center;justify-content:center;
@@ -3413,10 +3413,8 @@ document.addEventListener('DOMContentLoaded', function() {
   .mnav-arrow:active:not(:disabled){transform:scale(.92)}
   .mnav-arrow:disabled{opacity:.35;cursor:default}
 
-  /* room for the fixed navbar inside full-screen views */
-  .sf-overlay,.segf-overlay{padding-block-start:52px}
-
-  @media(max-width:560px){
+  @media(max-width:640px){
+    .topbar.mtop{gap:8px;padding:0 12px}
     .mnav-exit span{display:none}
     .mnav-exit{padding:9px 11px}
     .mnav-logo{height:22px}
@@ -3468,35 +3466,32 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
 </div>
 
-<header class="mnav" role="banner">
-  <button class="mnav-exit" id="mExitBtn" type="button" onclick="_mExitToHub()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-    <span>العودة للمكتبة</span>
-  </button>
-  <img class="mnav-logo" src="../assets/brand-logo.svg" alt="مكتبة المدوّنة" />
-  <div class="mnav-hist">
-    <button class="mnav-arrow" id="mBackBtn" type="button" onclick="_mNavBack()" aria-label="الصفحة السابقة" title="الصفحة السابقة">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+<header class="topbar mtop" role="banner">
+  <!-- persistent hub-navigation cluster (never overwritten by app JS) -->
+  <div class="mtop-nav">
+    <button class="mnav-exit" id="mExitBtn" type="button" onclick="_mExitToHub()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      <span>العودة للمكتبة</span>
     </button>
-    <button class="mnav-arrow" id="mFwdBtn" type="button" onclick="_mNavForward()" aria-label="الصفحة التالية" title="الصفحة التالية">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
-    </button>
+    <div class="mnav-hist">
+      <button class="mnav-arrow" id="mBackBtn" type="button" onclick="_mNavBack()" aria-label="الصفحة السابقة" title="الصفحة السابقة">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <button class="mnav-arrow" id="mFwdBtn" type="button" onclick="_mNavForward()" aria-label="الصفحة التالية" title="الصفحة التالية">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+    </div>
   </div>
-</header>
-
-<!-- Original topbar kept in the DOM (hidden) — app JS still targets #topLeft/#topRight/#syncStatus/#userPill/#loginBtn -->
-<header class="topbar" role="banner" style="display:none" aria-hidden="true">
-  <div class="topbar-left" id="topLeft">
-    <div class="brand"><div class="brand-icon">🎬</div>مِرصاد</div>
-  </div>
+  <!-- per-view app controls (back-to-folder, editable title, save pill, view/publish menus) -->
+  <div class="topbar-left" id="topLeft"></div>
   <div class="topbar-right" id="topRight"></div>
-  <div style="display:flex;align-items:center;gap:8px;margin-right:4px">
+  <!-- persistent end cluster: sync status + brand logo (no login/account controls) -->
+  <div class="mtop-end">
     <div id="syncStatus" style="display:none" title="حالة المزامنة" onclick="_onSyncDotClick()">
       <div class="sync-dot"></div>
       <span id="syncText">—</span>
     </div>
-    <div id="userPill" style="display:none"></div>
-    <button id="loginBtn" class="btn btn-filled btn-sm" onclick="signInLocal()">تسجيل الدخول</button>
+    <img class="mnav-logo" src="../assets/brand-logo.svg" alt="مكتبة المدوّنة" />
   </div>
 </header>
 
@@ -10390,6 +10385,11 @@ window._mExitToHub = async function() {
 
   function push(fn, args) {
     if (replaying) return;
+    // Skip no-op re-renders of the current view (e.g. snapshot-driven
+    // renderHome, or re-opening the same project) so they don't pile up
+    // phantom history entries that make Back appear to "do nothing".
+    const top = stack[index];
+    if (top && top.fn === fn && JSON.stringify(top.args) === JSON.stringify(args)) return;
     stack = stack.slice(0, index + 1);
     stack.push({ fn, args });
     index = stack.length - 1;
