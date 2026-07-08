@@ -473,8 +473,8 @@ html[dir="rtl"] .ps-mem{padding:3px 3px 3px 10px}
     rgba(255,255,255,.6) 16px 34px);
   transition:opacity .6s var(--ease);
 }
-.ps-loadoverlay.show{display:block}
-.ps-loadoverlay.visible{opacity:.8;animation:psStripeMove 1.6s linear infinite}
+.ps-loadoverlay.show{display:block;animation:psStripeMove 1.6s linear infinite}
+.ps-loadoverlay.visible{opacity:.8}
 @keyframes psStripeMove{
   from{background-position:0 0}
   to{background-position:-34px 0}
@@ -528,5 +528,5 @@ html[dir="rtl"] .ps-mem{padding:3px 3px 3px 10px}
 }
 
 @media(prefers-reduced-motion:reduce){
-  .ps-overlay .ps-panel,.badge.new,.ps-lockart,.ps-avs img,.ps-loadoverlay.visible{animation:none!important}
+  .ps-overlay .ps-panel,.badge.new,.ps-lockart,.ps-avs img,.ps-loadoverlay.show{animation:none!important}
 }
