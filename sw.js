@@ -1,4 +1,4 @@
-const CACHE = 'mdwnh-lib-v17';
+const CACHE = 'mdwnh-lib-v18';
 const ASSETS = [
   './',
   './index.html',
@@ -27,9 +27,38 @@ self.addEventListener('activate', (e) => {
   );
 });
 
+// Network-first for pages/code so new deploys show up without a hard refresh;
+// fall back to cache only when offline. Assets (images/fonts/audio) stay
+// cache-first for speed.
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
+  const url = new URL(e.request.url);
+  if (url.origin !== self.location.origin) return;
+
+  const isPage = e.request.mode === 'navigate' ||
+    /\.(html|js|css|webmanifest)$/.test(url.pathname) ||
+    url.pathname === '/' || url.pathname.endsWith('/');
+
+  if (isPage) {
+    e.respondWith(
+      fetch(e.request).then((res) => {
+        if (res && res.status === 200) {
+          const clone = res.clone();
+          caches.open(CACHE).then((c) => c.put(e.request, clone));
+        }
+        return res;
+      }).catch(() => caches.match(e.request).then((cached) => cached || caches.match('./index.html')))
+    );
+    return;
+  }
+
   e.respondWith(
-    caches.match(e.request).then((cached) => cached || fetch(e.request).catch(() => cached))
+    caches.match(e.request).then((cached) => cached || fetch(e.request).then((res) => {
+      if (res && res.status === 200) {
+        const clone = res.clone();
+        caches.open(CACHE).then((c) => c.put(e.request, clone));
+      }
+      return res;
+    }).catch(() => cached))
   );
 });
