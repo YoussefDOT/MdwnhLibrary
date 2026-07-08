@@ -31,6 +31,7 @@ body.ps-lock{overflow:hidden}
 /* ---------- main calendar panel ---------- */
 #psCal{z-index:100}
 .ps-panel{
+  position:relative;
   background:#fafafa;
   border-radius:28px;
   box-shadow:0 42px 100px -34px rgba(38,38,38,.6);
@@ -463,9 +464,9 @@ html[dir="rtl"] .ps-mem{padding:3px 3px 3px 10px}
 }
 .ps-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* ---------- loading toast ---------- */
+/* ---------- loading toast (scoped inside the calendar panel) ---------- */
 .ps-loadtoast{
-  display:none;position:fixed;right:20px;bottom:20px;z-index:150;
+  display:none;position:absolute;right:16px;bottom:74px;z-index:5;
   align-items:center;gap:10px;
   background:#fff;color:var(--ink);font-size:.84rem;font-weight:700;
   border-radius:999px;padding:10px 18px;box-shadow:var(--shadow-lg);

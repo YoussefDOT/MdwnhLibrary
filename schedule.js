@@ -140,6 +140,9 @@
         </button>
         <span class="ps-admin-chip">✦ وضع القائد مفعّل <button id="psLogout">خروج</button></span>
       </div>
+      <div class="ps-loadtoast" id="psLoadToast" role="status" aria-live="polite">
+        <span class="ps-spinner"></span><span>جاري تحميل الجدول</span>
+      </div>
     </div>
   </div>
 
@@ -256,10 +259,7 @@
     </div>
   </div>
 
-  <div class="ps-toast" id="psToast"></div>
-  <div class="ps-loadtoast" id="psLoadToast" role="status" aria-live="polite">
-    <span class="ps-spinner"></span><span>جاري تحميل الجدول</span>
-  </div>`;
+  <div class="ps-toast" id="psToast"></div>`;
   document.body.appendChild(root);
 
   const $ = (id) => document.getElementById(id);
