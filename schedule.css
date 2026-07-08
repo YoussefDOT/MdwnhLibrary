@@ -469,12 +469,12 @@ html[dir="rtl"] .ps-mem{padding:3px 3px 3px 10px}
   display:none;position:absolute;inset:0;z-index:6;pointer-events:none;
   opacity:0;background-color:#faf7f0;
   background-image:repeating-linear-gradient(-38deg,
-    rgba(243,192,43,.4) 0 16px,
-    rgba(255,255,255,.85) 16px 34px);
-  transition:opacity .35s var(--ease);
+    rgba(243,192,43,.18) 0 16px,
+    rgba(255,255,255,.6) 16px 34px);
+  transition:opacity .6s var(--ease);
 }
 .ps-loadoverlay.show{display:block}
-.ps-loadoverlay.visible{opacity:1;animation:psStripeMove 1.6s linear infinite}
+.ps-loadoverlay.visible{opacity:.8;animation:psStripeMove 1.6s linear infinite}
 @keyframes psStripeMove{
   from{background-position:0 0}
   to{background-position:-34px 0}

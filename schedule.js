@@ -307,7 +307,7 @@
     const el = $('psLoadToast');
     ov.classList.remove('visible');
     el.classList.remove('visible');
-    setTimeout(() => { ov.classList.remove('show'); el.classList.remove('show'); }, 350);
+    setTimeout(() => { ov.classList.remove('show'); el.classList.remove('show'); }, 620);
   }
 
   /* ---------- firebase (lazy) ---------- */
