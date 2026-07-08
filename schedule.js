@@ -256,7 +256,10 @@
     </div>
   </div>
 
-  <div class="ps-toast" id="psToast"></div>`;
+  <div class="ps-toast" id="psToast"></div>
+  <div class="ps-loadtoast" id="psLoadToast" role="status" aria-live="polite">
+    <span class="ps-spinner"></span><span>جاري تحميل الجدول</span>
+  </div>`;
   document.body.appendChild(root);
 
   const $ = (id) => document.getElementById(id);
@@ -290,6 +293,18 @@
     toastT = setTimeout(() => t.classList.remove('show'), 2600);
   }
 
+  let dataLoaded = false;
+  function showLoadToast() {
+    const el = $('psLoadToast');
+    el.classList.add('show');
+    requestAnimationFrame(() => el.classList.add('visible'));
+  }
+  function hideLoadToast() {
+    const el = $('psLoadToast');
+    el.classList.remove('visible');
+    setTimeout(() => el.classList.remove('show'), 350);
+  }
+
   /* ---------- firebase (lazy) ---------- */
   async function startFirebase() {
     if (fbStarted) return;
@@ -314,10 +329,15 @@
         renderCalendar();
         if (sheetDate && $('psSheet').classList.contains('open')) renderSheet(sheetDate);
         if (editing && $('psEditor').classList.contains('open')) renderEdTags();
-      }, () => toast('تعذّر الاتصال بقاعدة البيانات'));
+        if (!dataLoaded) { dataLoaded = true; hideLoadToast(); }
+      }, () => {
+        toast('تعذّر الاتصال بقاعدة البيانات');
+        if (!dataLoaded) { dataLoaded = true; hideLoadToast(); }
+      });
     } catch (err) {
       fbStarted = false;
       toast('تعذّر تحميل الجدول — تحقق من الاتصال');
+      hideLoadToast();
     }
   }
 
@@ -802,6 +822,7 @@
     applyAdmin();
     renderCalendar();
     openLayer('psCal');
+    if (!dataLoaded) showLoadToast();
     startFirebase();
   });
 })();
