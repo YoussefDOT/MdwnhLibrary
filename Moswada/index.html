@@ -3376,8 +3376,55 @@ document.addEventListener('DOMContentLoaded', function() {
   /* login barrier removed — never show the login wall */
   body:not(.auth-ready) #loginPage{display:none !important}
 
+  /* ── persistent top navbar: exit-to-hub + history + brand logo ── */
+  body{padding-top:52px}
+  .mnav{
+    position:fixed;inset-block-start:0;inset-inline:0;z-index:950;
+    height:52px;display:flex;align-items:center;justify-content:space-between;gap:14px;
+    padding:0 16px;background:rgba(28,28,30,.78);backdrop-filter:saturate(180%) blur(20px);
+    -webkit-backdrop-filter:saturate(180%) blur(20px);
+    border-bottom:1px solid rgba(255,255,255,.1);
+  }
+  html[data-theme="light"] .mnav{
+    background:rgba(250,249,247,.85);border-bottom-color:rgba(38,38,38,.09);
+    box-shadow:0 1px 0 rgba(38,38,38,.06);
+  }
+  .mnav-exit{
+    display:flex;align-items:center;gap:8px;flex-shrink:0;
+    font-family:'Baloo Bhaijaan 2',inherit;font-size:14px;font-weight:700;
+    color:#fff;background:var(--mdwnh-red);border:none;border-radius:999px;
+    padding:9px 16px;cursor:pointer;
+    box-shadow:0 4px 14px -4px rgba(229,75,42,.55);
+    transition:transform .3s var(--mdwnh-bounce),box-shadow .3s var(--mdwnh-bounce);
+  }
+  .mnav-exit svg{width:15px;height:15px;flex-shrink:0}
+  .mnav-exit:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 8px 20px -4px rgba(229,75,42,.65)}
+  .mnav-exit:active{transform:scale(.95)}
+  .mnav-logo{height:26px;width:auto;position:absolute;inset-inline-start:50%;transform:translateX(50%);filter:drop-shadow(0 2px 6px rgba(0,0,0,.18))}
+  .mnav-hist{display:flex;align-items:center;gap:6px;flex-shrink:0}
+  .mnav-arrow{
+    display:flex;align-items:center;justify-content:center;
+    width:34px;height:34px;border-radius:11px;flex-shrink:0;
+    color:var(--text-1);background:var(--surface-1);border:1px solid var(--border);
+    cursor:pointer;transition:transform .3s var(--mdwnh-bounce),background .25s,opacity .25s;
+  }
+  .mnav-arrow svg{width:17px;height:17px}
+  .mnav-arrow:hover:not(:disabled){transform:translateY(-2px);background:var(--surface-2)}
+  .mnav-arrow:active:not(:disabled){transform:scale(.92)}
+  .mnav-arrow:disabled{opacity:.35;cursor:default}
+
+  /* room for the fixed navbar inside full-screen views */
+  .sf-overlay,.segf-overlay{padding-block-start:52px}
+
+  @media(max-width:560px){
+    .mnav-exit span{display:none}
+    .mnav-exit{padding:9px 11px}
+    .mnav-logo{height:22px}
+  }
+
   @media(prefers-reduced-motion:reduce){
     #mDeco .deco,.brand-icon{animation:none !important}
+    .mnav-exit,.mnav-arrow{transition:none}
   }
 </style>
 </head>
@@ -3421,7 +3468,24 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
 </div>
 
-<header class="topbar" role="banner">
+<header class="mnav" role="banner">
+  <button class="mnav-exit" id="mExitBtn" type="button" onclick="_mExitToHub()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    <span>العودة للمكتبة</span>
+  </button>
+  <img class="mnav-logo" src="../assets/brand-logo.svg" alt="مكتبة المدوّنة" />
+  <div class="mnav-hist">
+    <button class="mnav-arrow" id="mBackBtn" type="button" onclick="_mNavBack()" aria-label="الصفحة السابقة" title="الصفحة السابقة">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <button class="mnav-arrow" id="mFwdBtn" type="button" onclick="_mNavForward()" aria-label="الصفحة التالية" title="الصفحة التالية">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- Original topbar kept in the DOM (hidden) — app JS still targets #topLeft/#topRight/#syncStatus/#userPill/#loginBtn -->
+<header class="topbar" role="banner" style="display:none" aria-hidden="true">
   <div class="topbar-left" id="topLeft">
     <div class="brand"><div class="brand-icon">🎬</div>مِرصاد</div>
   </div>
@@ -10304,6 +10368,81 @@ async function _ensureSharedAuth() {
 }
 _ensureSharedAuth();
 
+// ── Persistent top navbar: exit-to-hub + in-app back/forward ──
+window._mExitToHub = async function() {
+  if (await _showConfirm('هل تريد العودة إلى مكتبة المدوّنة؟', { confirmLabel: 'العودة للمكتبة' })) {
+    location.href = '../';
+  }
+};
+
+(function() {
+  // Wrap the app's view-changing functions so the navbar's back/forward
+  // buttons can replay them, without altering what each function does.
+  const _mOrig = {
+    showHome, openFolderView, openProject, openShotFull, openSegFull,
+    closeShotFull, closeSegFull, goToFolder, flpGoBack
+  };
+  // No seeded entry — the app's own first showHome()/openFolderLink()/etc.
+  // call creates entry 0, so back/forward stay correctly disabled until then.
+  let stack = [];
+  let index = -1;
+  let replaying = false;
+
+  function push(fn, args) {
+    if (replaying) return;
+    stack = stack.slice(0, index + 1);
+    stack.push({ fn, args });
+    index = stack.length - 1;
+    updateButtons();
+  }
+  function stepBack() {
+    if (replaying) return;
+    if (index > 0) { stack = stack.slice(0, index); index--; }
+    updateButtons();
+  }
+  function replay(entry) {
+    replaying = true;
+    try {
+      if (entry.fn === 'home')   _mOrig.showHome();
+      if (entry.fn === 'folder') _mOrig.openFolderView(entry.args[0], entry.args[1]);
+      if (entry.fn === 'project')_mOrig.openProject(entry.args[0]);
+      if (entry.fn === 'shot')   _mOrig.openShotFull(entry.args[0]);
+      if (entry.fn === 'seg')    _mOrig.openSegFull(entry.args[0]);
+    } finally { replaying = false; }
+  }
+  function updateButtons() {
+    const b = document.getElementById('mBackBtn'), f = document.getElementById('mFwdBtn');
+    if (b) b.disabled = index <= 0;
+    if (f) f.disabled = index >= stack.length - 1;
+  }
+
+  showHome        = function(...a) { push('home', []);              return _mOrig.showHome.apply(this, a); };
+  openFolderView  = function(...a) { push('folder', [a[0], a[1]]);   return _mOrig.openFolderView.apply(this, a); };
+  openProject     = function(...a) { push('project', [a[0]]);        return _mOrig.openProject.apply(this, a); };
+  openShotFull    = function(...a) { push('shot', [a[0]]);           return _mOrig.openShotFull.apply(this, a); };
+  openSegFull     = function(...a) { push('seg', [a[0]]);            return _mOrig.openSegFull.apply(this, a); };
+  closeShotFull   = function(...a) { stepBack();                     return _mOrig.closeShotFull.apply(this, a); };
+  closeSegFull    = function(...a) { stepBack();                     return _mOrig.closeSegFull.apply(this, a); };
+  goToFolder      = function(...a) { stepBack();                     return _mOrig.goToFolder.apply(this, a); };
+  flpGoBack       = function(...a) { stepBack();                     return _mOrig.flpGoBack.apply(this, a); };
+
+  Object.assign(window, {
+    showHome, openFolderView, openProject, openShotFull, openSegFull,
+    closeShotFull, closeSegFull, goToFolder, flpGoBack
+  });
+
+  window._mNavBack = function() {
+    if (index <= 0) return;
+    index--; replay(stack[index]); updateButtons();
+  };
+  window._mNavForward = function() {
+    if (index >= stack.length - 1) return;
+    index++; replay(stack[index]); updateButtons();
+  };
+  document.addEventListener('DOMContentLoaded', updateButtons);
+  updateButtons();
+})();
+
 let fbUser = null;
 
 window._mUploadAvatar = async function(input) {
@@ -10582,7 +10721,6 @@ window.toggleProfileDropdown = function(e) {
       <div class="profile-uploading" id="avatarUploadStatus" style="display:none">جارٍ الرفع...</div>
     </div>
     <hr class="profile-divider">
-    <button class="btn btn-glass btn-sm" style="width:100%;justify-content:center;color:#111827;border-color:#e5e7eb" onclick="toggleTheme();_closeProfileDropdown()">${document.documentElement.getAttribute('data-theme') === 'light' ? '🌙 الوضع الداكن' : '☀️ الوضع الفاتح'}</button>
     <button class="btn btn-glass btn-sm" style="width:100%;justify-content:center;color:#111827;border-color:#e5e7eb" onclick="changeDisplayName()">✏️ تغيير الاسم</button>
     <button class="btn btn-glass btn-sm" style="width:100%;justify-content:center;color:#111827;border-color:#e5e7eb" onclick="signOutUser()">تسجيل الخروج</button>`;
   document.body.appendChild(drop);
@@ -10611,8 +10749,7 @@ async function changeDisplayName(e) {
 
 // ── Init ──
 (async () => {
-  const savedTheme = localStorage.getItem('sm_theme') || 'light';
-  applyTheme(savedTheme);
+  applyTheme('light'); // dark mode option removed — always light
 
   // Check for project share link — works without login
   const shareId = new URLSearchParams(location.search).get('share');
