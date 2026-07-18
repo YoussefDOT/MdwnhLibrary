@@ -370,14 +370,14 @@
   </div>
 
   <nav class="grid main" aria-label="روابط المبدع">
-    <a class="btn b1 reveal" style="--c:var(--red);--g:url('assets/icons/smile.png');--d:.38s" href="https://youssefdot.github.io/MdwnhCafe/">
+    <a class="btn b1 reveal" id="workspaceLink" style="--c:var(--red);--g:url('assets/icons/smile.png');--d:.38s" href="https://youssefdot.github.io/MaqrMdwnh/">
       <span class="glyph"></span>
       <span class="row"><span class="chip"><i></i></span></span>
       <span class="name">مساحة العمل</span>
       <span class="go">ادخل المساحة <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></span>
     </a>
 
-    <a class="btn b-moswada reveal" style="--c:var(--gold);--g:url('assets/icons/swash.png');--d:.42s" href="Moswada/">
+    <a class="btn b-moswada reveal" style="display:none;--c:var(--gold);--g:url('assets/icons/swash.png');--d:.42s" href="Moswada/">
       <span class="glyph"></span>
       <span class="row"><span class="chip"><i></i></span></span>
       <span class="name">مسودة العمل <span class="badge new">جديد</span></span>
@@ -535,6 +535,17 @@
       d.style.animationDuration=(16+i*3)+'s';
       d.style.animationDelay=(-i*2)+'s';
       deco.appendChild(d);
+    });
+  }
+
+  /* ----- hidden moswada access via shift-click ----- */
+  var workspaceLink = document.getElementById('workspaceLink');
+  if(workspaceLink){
+    workspaceLink.addEventListener('click', function(e){
+      if(e.shiftKey){
+        e.preventDefault();
+        window.location.href = 'Moswada/';
+      }
     });
   }
 
