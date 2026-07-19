@@ -15,7 +15,7 @@
   // Vercel endpoint that pushes the moment a task is created. Leave empty and
   // the GitHub Actions sweep still delivers, just 15-40 minutes later.
   // e.g. 'https://mdwnh-notify-api.vercel.app/api/notify'  (see NOTIFICATIONS.md)
-  var NOTIFY_URL = 'https://notify-i0hyzutbt-yosefbore3y-3820s-projects.vercel.app';
+  var NOTIFY_URL = 'https://notify-api-yosefbore3y-3820s-projects.vercel.app/api/notify';
 
   // Replace with the public key printed by `npm run keys` (see NOTIFICATIONS.md).
   var VAPID_PUBLIC_KEY = 'BIJexcgCnFbXBZRlZBasMGgWPacETxu3ZR8Mz1MzXUkI95PdfWdntrVIzpsAPK7yCfOUwELnuMjKbYX_N_JbXcc';
