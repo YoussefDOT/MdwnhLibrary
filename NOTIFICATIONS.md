@@ -213,17 +213,39 @@ vercel env add VAPID_SUBJECT production
 vercel --prod
 ```
 
+**٤.٥ — أطفئ حماية النشر (Deployment Protection). هذه الخطوة إجبارية.**
+
+Vercel يُفعّل حماية تلقائية تجعل كل طلب يرجع `401 Protected deployment`. متصفحك لا يستطيع الوصول للدالة وهي مفعّلة، ولن يصل أي تنبيه.
+
+1. افتح <https://vercel.com/dashboard> واختر مشروع **notify-api**
+2. **Settings** ← **Deployment Protection**
+3. تحت **Vercel Authentication** اختر **Disabled**
+4. اضغط **Save**
+
+هذا آمن: الدالة لا تقبل إلا رقم مهمة، وكل شيء آخر يُقرأ من Firebase، ولا تُرسل التنبيه مرتين للمهمة نفسها.
+
+للتأكد أنها انطفأت:
+
+```bash
+curl -i -X POST https://<رابطك>/api/notify \
+  -H "Content-Type: application/json" -d '{"taskId":"x"}'
+```
+
+المتوقع `HTTP/2 400` مع `{"error":"bad taskId"}` — أي أن الدالة ردّت. إن رأيت `401` فالحماية ما زالت مفعّلة.
+
 **٥. ضع الرابط في الموقع.** افتح `library.js` وابحث عن:
 
 ```js
 var NOTIFY_URL = '';
 ```
 
-ضع رابطك متبوعًا بـ `/api/notify`:
+ضع رابطك متبوعًا بـ **`/api/notify`** — لا تضع الرابط وحده:
 
 ```js
 var NOTIFY_URL = 'https://notify-api-xxxx.vercel.app/api/notify';
 ```
+
+استخدم رابط **الإنتاج** الثابت الذي يظهر في لوحة Vercel، لا الرابط الذي يحوي رموزًا عشوائية مثل `notify-i0hyzutbt-…`. ذاك يتغيّر مع كل رفع جديد وسيتعطّل لاحقًا.
 
 **٦. ارفع التعديل:**
 

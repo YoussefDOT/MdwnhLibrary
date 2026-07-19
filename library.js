@@ -883,12 +883,25 @@
       });
     }).then(function (sub) {
       var j = sub.toJSON();
-      return dbPut(ROOT + '/users/' + slug + '/push/' + subKey(j.endpoint), {
+      var key = subKey(j.endpoint);
+      return dbPut(ROOT + '/users/' + slug + '/push/' + key, {
         endpoint: j.endpoint,
         p256dh: j.keys.p256dh,
         auth: j.keys.auth,
         ua: navigator.userAgent.slice(0, 120),
         ts: Date.now()
+      }).then(function () {
+        // This browser may have been signed in as someone else before. The key
+        // is derived from the endpoint, so the previous owner would keep getting
+        // this device's notifications until we detach it.
+        return dbGet(ROOT + '/users').then(function (all) {
+          var stale = Object.keys(all || {}).filter(function (other) {
+            return other !== slug && all[other] && all[other].push && all[other].push[key];
+          });
+          return Promise.all(stale.map(function (other) {
+            return dbDelete(ROOT + '/users/' + other + '/push/' + key);
+          }));
+        }).catch(function () { /* cleanup is best effort */ });
       }).then(function () { return true; });
     }).catch(function (e) {
       console.warn('[push] subscribe failed', e);
@@ -902,14 +915,30 @@
      latency, never the notification itself. */
   function pingNotify(taskId) {
     if (!NOTIFY_URL) return;
+    // Pasting just the Vercel project URL is the obvious mistake, and POSTing
+    // to the root silently fails, so fix up the path instead of dying quietly.
+    var url = NOTIFY_URL.replace(/\/+$/, '');
+    if (!/\/api\/notify$/.test(url)) url += '/api/notify';
+
     try {
-      fetch(NOTIFY_URL, {
+      fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ taskId: taskId }),
         keepalive: true          // survives the modal closing / a quick tab close
-      }).catch(function () { });
-    } catch (e) { /* ignore */ }
+      }).then(function (r) {
+        if (r.ok) return r.json().then(function (j) { console.log('[notify]', j); });
+        // Loud on purpose: swallowing this made a broken endpoint look
+        // identical to a working one until someone noticed no phone buzzed.
+        console.warn('[notify] endpoint returned ' + r.status + (r.status === 401
+          ? ' — Vercel Deployment Protection is on. Turn it off in project settings.'
+          : ''));
+      }).catch(function (e) {
+        console.warn('[notify] could not reach endpoint:', e && e.message);
+      });
+    } catch (e) {
+      console.warn('[notify] ping failed:', e && e.message);
+    }
   }
 
   /* ======================================================================
