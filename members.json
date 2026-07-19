@@ -1,0 +1,33 @@
+{
+  "_note": "Single source of truth for the team roster. slug = avatar filename in MdwnhMembers/ and the key used under mdwnhLibrary/users. dbKey = exact key under players/ in the points database (do not 'fix' the spelling, it is byte-matched).",
+  "adminSlug": "nawaf",
+  "members": [
+    { "slug": "nawaf",          "name": "نواف",        "email": "iioiiioii99909@gmail.com",    "dbKey": "نواف",        "admin": true },
+    { "slug": "abu-bandar",     "name": "أبو بندر",    "email": "d777iu@gmail.com",            "dbKey": "أبو بندر" },
+    { "slug": "ali-magdy",      "name": "علي مجدي",    "email": "player3a2006@gmail.com",      "dbKey": "علي مجدي" },
+    { "slug": "furat",          "name": "فرات",        "email": "fourat750@gmail.com",         "dbKey": "فرات" },
+    { "slug": "khaled-hassan",  "name": "خالد حسن",    "email": "engkhaledhassan19@gmail.com", "dbKey": "خالد حسن" },
+    { "slug": "maito",          "name": "مايتو",       "email": "mait00.ns745@gmail.com",      "dbKey": "مايتو" },
+    { "slug": "malak",          "name": "ملك",         "email": "malak.abusisi@gmail.com",     "dbKey": "ملك" },
+    { "slug": "menna",          "name": "منة",         "email": "mennaabdulla56@gmail.com",    "dbKey": "منة" },
+    { "slug": "moro",           "name": "مورو",        "email": "moro.work26@gmail.com",       "dbKey": "مورو" },
+    { "slug": "mohamed-samier", "name": "محمد سمير",   "email": "mohamedsamier442@gmail.com",  "dbKey": "محمد سمير" },
+    { "slug": "al-shaeera",     "name": "الشعيرة",     "email": "mohmdsheeta23@gmail.com",     "dbKey": "الشعيرة" },
+    { "slug": "shared",         "name": "شارد",        "email": "redshirt4141@gmail.com",      "dbKey": "شارد" },
+    { "slug": "shafaq",         "name": "شفق",         "email": "shfq838@gmail.com",           "dbKey": "شفق" },
+    { "slug": "taha",           "name": "طه",          "email": "xxtaha50059xx@gmail.com",     "dbKey": "طه" },
+    { "slug": "warqa",          "name": "ورقاء",       "email": "alwarqa.artwork@gmail.com",   "dbKey": "ورقاء" },
+    { "slug": "youssef",        "name": "يوسف",        "email": "yosefbore3y@gmail.com",       "dbKey": "يوسف" },
+    { "slug": "jumana",         "name": "جمانة",       "email": "giomame6@gmail.com",          "dbKey": "جمانة" },
+    { "slug": "khaled",         "name": "خالد",        "email": "themaxim3000@gmail.com",      "dbKey": "خالد" },
+    { "slug": "rajab",          "name": "رجب",         "email": "d7.yahya.d@gmail.com",        "dbKey": "رجب" },
+    { "slug": "sahab",          "name": "سحاب",        "email": "sarah22220000r@gmail.com",    "dbKey": "سحاب" },
+    { "slug": "asem",           "name": "عاصم",        "email": "ajialmoslema@gmail.com",      "dbKey": "عاصم" },
+    { "slug": "omar",           "name": "عمر",         "email": "houranio159@gmail.com",       "dbKey": "عمر" },
+    { "slug": "mostafa",        "name": "مصطفى",       "email": "mustafaatef541@gmail.com",    "dbKey": "مصطفى" },
+    { "slug": "njoud",          "name": "نجود",        "email": "njoudalmousa0@gmail.com",     "dbKey": "نجود" },
+    { "slug": "ubay",           "name": "أُبي",        "email": "obaist218@gmail.com",         "dbKey": "أُبي" },
+    { "slug": "abdullah",       "name": "عبدالله",     "email": "everlingwoods@gmail.com",     "dbKey": "عبدالله" },
+    { "slug": "abu-muzahim",    "name": "ابو مزاحم",   "email": "algareir@gmail.com",          "dbKey": "ابو مزاحم" }
+  ]
+}

@@ -17,6 +17,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="schedule.css" />
+<link rel="stylesheet" href="library.css" />
 <style>
   :root{
     --snow:#faf9f7;
@@ -171,14 +172,15 @@
   .section-head .rule{flex:1;height:2px;border-radius:2px;background:linear-gradient(90deg,rgba(38,38,38,.14),transparent)}
 
   .grid{display:grid;gap:clamp(14px,2vw,20px)}
-  .grid.main{grid-template-columns:repeat(4,1fr)}
+  /* three across — the hidden مسودة card doesn't take a slot, so the row stays full */
+  .grid.main{grid-template-columns:repeat(3,1fr)}
   .grid.coord{grid-template-columns:repeat(3,1fr);margin-top:4px}
 
   /* ---------- big buttons ---------- */
   .btn{
     position:relative;display:flex;flex-direction:column;justify-content:flex-end;
-    gap:6px;min-height:150px;
-    padding:22px;border-radius:var(--r-md);
+    gap:6px;min-height:176px;
+    padding:24px;border-radius:var(--r-md);
     text-decoration:none;color:#fff;overflow:hidden;isolation:isolate;
     box-shadow:var(--shadow-md);
     transition:transform .4s var(--ease),box-shadow .4s var(--ease);
@@ -327,7 +329,7 @@
   }
 </style>
 </head>
-<body>
+<body class="locked">
 
 <div class="bg-deco" aria-hidden="true" id="deco"></div>
 
@@ -338,6 +340,34 @@
     <h1>مكتبة المدوّنة</h1>
     <p>بوّابة واحدة تجمع كل مساحاتك وروابطك — ومعها نبض خطة بدر الكبرى.</p>
   </header>
+
+  <!-- ===== تنبيه: الإشعارات معطّلة ===== -->
+  <div class="nag" id="notifNag" hidden role="status">
+    <span class="nag-ico">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/><path d="M3 3l18 18"/></svg>
+    </span>
+    <span class="nag-txt">
+      <b>التنبيهات معطّلة</b>
+      <span>لن تصلك تذكيرات المهام الجديدة ولا تنبيه اقتراب الموعد.</span>
+    </span>
+    <button class="nag-btn" id="notifNagBtn" type="button">تفعيل التنبيهات</button>
+  </div>
+
+  <!-- ===== المفضلة (collapsible, sits above بدر) ===== -->
+  <section class="group fav reveal" id="favGroup" data-group="fav" style="--d:.10s" aria-label="المفضلة">
+    <button class="group-head" type="button" aria-expanded="true">
+      <span class="tri">
+        <svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M6 8.6 1.2 3.4A.7.7 0 0 1 1.7 2.2h8.6a.7.7 0 0 1 .5 1.2z"/></svg>
+      </span>
+      <h2>المفضلة</h2>
+      <span class="count" id="favCount"></span>
+      <span class="tag">اختصاراتك السريعة</span>
+      <span class="rule"></span>
+    </button>
+    <div class="group-body"><div class="group-inner">
+      <div class="fav-strip" id="favStrip"></div>
+    </div></div>
+  </section>
 
   <!-- ===== بدر الكبرى progress ===== -->
   <section class="badr reveal" style="--d:.18s" aria-label="تقدّم خطة بدر الكبرى">
@@ -362,36 +392,84 @@
     </div>
   </section>
 
+  <!-- ===== مهامي / لوحة القائد ===== -->
+  <section class="group tasks reveal" id="tasksGroup" data-group="tasks" style="--d:.24s" aria-label="المهام">
+    <button class="group-head" type="button" aria-expanded="true">
+      <span class="tri">
+        <svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M6 8.6 1.2 3.4A.7.7 0 0 1 1.7 2.2h8.6a.7.7 0 0 1 .5 1.2z"/></svg>
+      </span>
+      <h2>مهامي</h2>
+      <span class="tag" id="tasksTag">عدّاد تنازلي لكل مهمة</span>
+      <span class="rule"></span>
+    </button>
+    <div class="group-body"><div class="group-inner">
+
+      <div class="me-strip">
+        <img id="meAvatar" src="" alt="" />
+        <span class="me-txt">
+          <span class="me-name" id="meName">—</span>
+          <span class="me-pts">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.4 6.2 20.5l1.1-6.5L2.6 9.4l6.5-.9z"/></svg>
+            <b id="mePts">…</b> نقطة
+          </span>
+        </span>
+        <span class="me-actions">
+          <button class="mini-btn gold" id="addTaskBtn" type="button" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            إضافة مهمة
+          </button>
+          <button class="mini-btn" id="archBtn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h18v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M2 4h20v4H2z"/><path d="M10 12h4"/></svg>
+            الأرشيف<span id="archCount"></span>
+          </button>
+          <button class="mini-btn" id="logoutBtn" type="button" title="تسجيل الخروج" aria-label="تسجيل الخروج">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+          </button>
+        </span>
+      </div>
+
+      <div class="loader" id="taskLoader" hidden></div>
+      <p class="loader-lbl" id="taskLoaderLbl" hidden>جارٍ تحميل مهامك…</p>
+      <div id="taskList"></div>
+
+    </div></div>
+  </section>
+
   <!-- ===== للمبدع / المكتبة ===== -->
-  <div class="section-head reveal" style="--d:.30s">
-    <h2>المكتبة</h2>
-    <span class="tag">للمبدع · الأساسي للجميع</span>
-    <span class="rule"></span>
-  </div>
+  <section class="group reveal" data-group="library" style="--d:.30s">
+    <button class="group-head" type="button" aria-expanded="true">
+      <span class="tri">
+        <svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M6 8.6 1.2 3.4A.7.7 0 0 1 1.7 2.2h8.6a.7.7 0 0 1 .5 1.2z"/></svg>
+      </span>
+      <h2>المكتبة</h2>
+      <span class="tag">للمبدع · الأساسي للجميع</span>
+      <span class="rule"></span>
+    </button>
+    <div class="group-body"><div class="group-inner">
 
   <nav class="grid main" aria-label="روابط المبدع">
-    <a class="btn b1 reveal" id="workspaceLink" style="--c:var(--red);--g:url('assets/icons/smile.png');--d:.38s" href="https://youssefdot.github.io/MaqrMdwnh/">
+    <a class="btn b1 reveal" id="workspaceLink" data-card="workspace" style="--c:var(--red);--g:url('assets/icons/smile.png');--d:.38s" href="https://youssefdot.github.io/MaqrMdwnh/">
       <span class="glyph"></span>
       <span class="row"><span class="chip"><i></i></span></span>
       <span class="name">مساحة العمل</span>
       <span class="go">ادخل المساحة <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></span>
     </a>
 
-    <a class="btn b-moswada reveal" style="display:none;--c:var(--gold);--g:url('assets/icons/swash.png');--d:.42s" href="Moswada/">
+    <a class="btn b-moswada reveal" data-card="moswada" style="display:none;--c:var(--gold);--g:url('assets/icons/swash.png');--d:.42s" href="Moswada/">
       <span class="glyph"></span>
       <span class="row"><span class="chip"><i></i></span></span>
       <span class="name">مسودة العمل <span class="badge new">جديد</span></span>
       <span class="go">افتح المسودة <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></span>
     </a>
 
-    <a class="btn b2 reveal" style="--c:var(--teal);--g:url('assets/icons/sparkles.png');--d:.46s" href="https://youssefdot.github.io/MdwnhPoints/">
+    <a class="btn b2 reveal" data-card="points" style="--c:var(--teal);--g:url('assets/icons/sparkles.png');--d:.46s" href="https://youssefdot.github.io/MdwnhPoints/">
       <span class="glyph"></span>
       <span class="row"><span class="chip"><i></i></span></span>
       <span class="name">النقاط وصحبة الفجر</span>
       <span class="go">تابع نقاطك <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></span>
     </a>
 
-    <a class="btn b3 reveal" style="--c:var(--blue);--g:url('assets/icons/spiral.png');--d:.54s" href="https://m5zan.carrd.co">
+    <a class="btn b3 reveal" data-card="guides" style="--c:var(--blue);--g:url('assets/icons/spiral.png');--d:.54s" href="https://m5zan.carrd.co">
       <span class="glyph"></span>
       <span class="row"><span class="chip"><i></i></span></span>
       <span class="name">الأدلة والروابط</span>
@@ -399,15 +477,23 @@
     </a>
   </nav>
 
+    </div></div>
+  </section>
+
   <!-- ===== فريق التنسيق ===== -->
-  <div class="section-head reveal" style="--d:.62s">
-    <h2>فريق التنسيق</h2>
-    <span class="tag">وصول خاص</span>
-    <span class="rule"></span>
-  </div>
+  <section class="group reveal" data-group="coord" style="--d:.62s">
+    <button class="group-head" type="button" aria-expanded="true">
+      <span class="tri">
+        <svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M6 8.6 1.2 3.4A.7.7 0 0 1 1.7 2.2h8.6a.7.7 0 0 1 .5 1.2z"/></svg>
+      </span>
+      <h2>فريق التنسيق</h2>
+      <span class="tag">وصول خاص</span>
+      <span class="rule"></span>
+    </button>
+    <div class="group-body"><div class="group-inner">
 
   <nav class="grid coord" aria-label="روابط فريق التنسيق">
-    <a class="cbtn reveal" style="--c:var(--blue);--g:url('assets/icons/swash.png');--d:.70s" href="https://youssefdot.github.io/MdwnhNewsDesigner/">
+    <a class="cbtn reveal" data-card="press" style="--c:var(--blue);--g:url('assets/icons/swash.png');--d:.70s" href="https://youssefdot.github.io/MdwnhNewsDesigner/">
       <span class="chip"><i></i></span>
       <span class="txt">
         <span class="name">استوديو الصحافة</span>
@@ -416,7 +502,7 @@
       <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
     </a>
 
-    <button class="cbtn reveal" id="openSchedule" type="button" style="--c:var(--red);--g:url('assets/icons/sparkles.png');--d:.74s">
+    <button class="cbtn reveal" id="openSchedule" data-card="schedule" type="button" style="--c:var(--red);--g:url('assets/icons/sparkles.png');--d:.74s">
       <span class="chip"><i></i></span>
       <span class="txt">
         <span class="name">جدول النشر <span class="badge new">جديد</span></span>
@@ -425,7 +511,7 @@
       <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
     </button>
 
-    <a class="cbtn reveal" style="--c:var(--gold);--g:url('assets/icons/hash.png');--d:.78s" href="https://mdwn.studio/analytics/">
+    <a class="cbtn reveal" data-card="analytics" style="--c:var(--gold);--g:url('assets/icons/hash.png');--d:.78s" href="https://mdwn.studio/analytics/">
       <span class="chip"><i></i></span>
       <span class="txt">
         <span class="name">صفحة الإحصائيات</span>
@@ -434,7 +520,7 @@
       <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
     </a>
 
-    <a class="cbtn reveal" style="--c:var(--teal);--g:url('assets/icons/asterisk.png');--d:.86s" href="https://mdwntnseq.carrd.co">
+    <a class="cbtn reveal" data-card="tools" style="--c:var(--teal);--g:url('assets/icons/asterisk.png');--d:.86s" href="https://mdwntnseq.carrd.co">
       <span class="chip"><i></i></span>
       <span class="txt">
         <span class="name">أدوات التنسيق</span>
@@ -443,6 +529,9 @@
       <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
     </a>
   </nav>
+
+    </div></div>
+  </section>
 
   <!-- ===== paper ===== -->
   <div class="paper-wrap reveal" style="--d:.84s" aria-hidden="true">
@@ -472,6 +561,153 @@
     <p class="foot-line">مكتبة المدوّنة · خطة بدر الكبرى ٢٠٢٥–٢٠٢٦</p>
   </footer>
 
+</div>
+
+<!-- ==================== LOGIN GATE ==================== -->
+<div class="gate" id="gate" role="dialog" aria-modal="true" aria-label="تسجيل الدخول">
+  <div class="gate-card">
+
+    <!-- step 0: shown until we know whether this device is already signed in -->
+    <div class="gate-step" data-step="0">
+      <img class="gate-logo" src="assets/brand-logo.svg" alt="شعار المدوّنة" />
+      <h2>مكتبة المدوّنة</h2>
+      <p style="margin-bottom:0">جارٍ التحضير…</p>
+      <div class="loader" style="margin-top:20px"></div>
+    </div>
+
+    <!-- step 1: email -->
+    <div class="gate-step" data-step="1" hidden>
+      <img class="gate-logo" src="assets/brand-logo.svg" alt="شعار المدوّنة" />
+      <h2>أهلًا بك في المكتبة</h2>
+      <p>اكتب بريدك الإلكتروني المسجَّل في الفريق للدخول. سيتم حفظ دخولك على هذا الجهاز.</p>
+      <div class="gate-field">
+        <input id="gateEmail" type="email" inputmode="email" autocomplete="email"
+               spellcheck="false" placeholder="your@email.com" aria-label="البريد الإلكتروني" />
+      </div>
+      <button class="gate-btn" id="gateGo" type="button">دخول</button>
+      <p class="gate-msg" id="gateMsg" role="status" aria-live="polite"></p>
+    </div>
+
+    <!-- step 2: notifications -->
+    <div class="gate-step" data-step="2" hidden>
+      <div class="gate-hello">
+        <img id="helloAvatar" src="" alt="" />
+        <b>أهلًا <span id="helloName"></span> 👋</b>
+      </div>
+      <div class="bell">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+      </div>
+      <h2>فعّل التنبيهات</h2>
+      <p>التنبيهات مطلوبة للمتابعة — بها نُذكّرك بالمهام الجديدة وبالمهام التي أوشك موعدها.</p>
+      <button class="gate-btn" id="allowBtn" type="button">السماح بالتنبيهات</button>
+    </div>
+
+    <!-- step 3: blocked -->
+    <div class="gate-step" data-step="3" hidden>
+      <div class="bell">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/><path d="M3 3l18 18"/></svg>
+      </div>
+      <h2>التنبيهات محظورة</h2>
+      <p>لا يمكن المتابعة بدون تفعيل التنبيهات. فعّلها من إعدادات المتصفح ثم اضغط الزر بالأسفل.</p>
+      <ul class="gate-steps">
+        <li>اضغط على أيقونة القفل 🔒 بجوار رابط الموقع</li>
+        <li>افتح «إعدادات الموقع» أو «Notifications»</li>
+        <li>غيّر الإعداد إلى «السماح / Allow»</li>
+        <li>ارجع هنا واضغط «تحقّق مجددًا»</li>
+      </ul>
+      <button class="gate-btn" id="deniedRetry" type="button" style="margin-top:14px">تحقّق مجددًا</button>
+      <button class="gate-btn ghost" id="deniedSkip" type="button">المتابعة بدون تنبيهات</button>
+    </div>
+
+    <!-- step 4: platform can't do web push at all (iOS Safari outside the PWA) -->
+    <div class="gate-step" data-step="4" hidden>
+      <div class="bell">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M5 21h14"/></svg>
+      </div>
+      <h2>ثبّت التطبيق أولًا</h2>
+      <p>متصفحك لا يدعم التنبيهات إلا بعد تثبيت الموقع كتطبيق على جهازك.</p>
+      <ul class="gate-steps">
+        <li>على الآيفون: اضغط زر المشاركة ⎋ في سفاري</li>
+        <li>اختر «إضافة إلى الشاشة الرئيسية»</li>
+        <li>افتح التطبيق من الأيقونة الجديدة</li>
+        <li>سيطلب منك السماح بالتنبيهات</li>
+      </ul>
+      <button class="gate-btn ghost" id="unsupportedGo" type="button">متابعة مؤقتًا بدون تنبيهات</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ==================== ARCHIVE ==================== -->
+<div class="modal" id="archModal" hidden role="dialog" aria-modal="true" aria-label="أرشيف المهام">
+  <div class="sheet">
+    <div class="sheet-head">
+      <h3>الأرشيف</h3>
+      <button class="x-btn" type="button" data-close="archModal" aria-label="إغلاق">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body" id="archBody"></div>
+  </div>
+</div>
+
+<!-- ==================== ADD TASK (admin) ==================== -->
+<div class="modal" id="addModal" hidden role="dialog" aria-modal="true" aria-label="إضافة مهمة">
+  <div class="sheet">
+    <div class="sheet-head">
+      <h3>إضافة مهمة</h3>
+      <button class="x-btn" type="button" data-close="addModal" aria-label="إغلاق">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body">
+
+      <div class="f-row">
+        <label for="taskName">اسم المهمة</label>
+        <input id="taskName" type="text" placeholder="مثال: تصميم غلاف الحلقة الثالثة" />
+      </div>
+
+      <div class="f-row">
+        <label>لون المهمة</label>
+        <div class="swatches" id="swatches"></div>
+      </div>
+
+      <div class="f-row">
+        <label>الرمز التعبيري</label>
+        <div class="emojis" id="emojis"></div>
+      </div>
+
+      <div class="f-row">
+        <label>الموعد النهائي — <span id="dueLabel" style="font-weight:700;color:#8b847b">لم يُحدَّد بعد</span></label>
+        <div class="cal">
+          <div class="cal-head">
+            <button class="cal-nav" id="calPrev" type="button" aria-label="الشهر السابق">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+            </button>
+            <b id="calLabel">—</b>
+            <button class="cal-nav" id="calNext" type="button" aria-label="الشهر التالي">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+            </button>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+          <div class="cal-time">
+            <label for="calTime">الساعة</label>
+            <input id="calTime" type="time" value="23:59" />
+          </div>
+        </div>
+      </div>
+
+      <div class="f-row">
+        <label>المكلَّفون</label>
+        <div class="picked" id="picked"></div>
+        <div class="people" id="people"></div>
+      </div>
+
+    </div>
+    <div class="sheet-foot">
+      <button class="wide-btn" id="saveTask" type="button" disabled>إضافة المهمة</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -583,5 +819,6 @@
 })();
 </script>
 <script src="schedule.js" defer></script>
+<script src="library.js" defer></script>
 </body>
 </html>

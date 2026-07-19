@@ -1,0 +1,34 @@
+name: Task reminders
+
+on:
+  schedule:
+    # every 5 minutes — GitHub queues these, so expect a few minutes of drift
+    - cron: '*/5 * * * *'
+  workflow_dispatch:   # lets you run it by hand from the Actions tab
+
+concurrency:
+  group: reminders
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: tools
+        run: npm install --no-audit --no-fund
+
+      - name: Send reminders
+        working-directory: tools
+        env:
+          VAPID_PUBLIC: ${{ secrets.VAPID_PUBLIC }}
+          VAPID_PRIVATE: ${{ secrets.VAPID_PRIVATE }}
+          VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
+          SITE_URL: https://youssefdot.github.io/MdwnhLibrary
+        run: node send-reminders.mjs

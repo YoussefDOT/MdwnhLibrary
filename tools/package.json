@@ -1,0 +1,14 @@
+{
+  "name": "mdwnh-reminders",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Sends web-push reminders for مكتبة المدوّنة tasks. Runs on a GitHub Actions cron.",
+  "scripts": {
+    "keys": "web-push generate-vapid-keys",
+    "send": "node send-reminders.mjs"
+  },
+  "dependencies": {
+    "web-push": "^3.6.7"
+  }
+}
