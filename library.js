@@ -15,7 +15,7 @@
   // Vercel endpoint that pushes the moment a task is created. Leave empty and
   // the GitHub Actions sweep still delivers, just 15-40 minutes later.
   // e.g. 'https://mdwnh-notify-api.vercel.app/api/notify'  (see NOTIFICATIONS.md)
-  var NOTIFY_URL = '';
+  var NOTIFY_URL = 'https://notify-i0hyzutbt-yosefbore3y-3820s-projects.vercel.app';
 
   // Replace with the public key printed by `npm run keys` (see NOTIFICATIONS.md).
   var VAPID_PUBLIC_KEY = 'BIJexcgCnFbXBZRlZBasMGgWPacETxu3ZR8Mz1MzXUkI95PdfWdntrVIzpsAPK7yCfOUwELnuMjKbYX_N_JbXcc';
@@ -401,8 +401,8 @@
     return '<span class="cd-wrap">' +
       '<span class="cd-pre">تبقى</span>' +
       '<span class="cd" data-due="' + t.due + '">' +
-        '<span class="cd-unit"><span class="cd-lbl">يوم</span><span class="cd-num" data-u="d">' + ar(c.days) + '</span></span>' +
-        '<span class="cd-unit"><span class="cd-lbl">ساعة</span><span class="cd-num" data-u="h">' + ar(c.hours) + '</span></span>' +
+      '<span class="cd-unit"><span class="cd-lbl">يوم</span><span class="cd-num" data-u="d">' + ar(c.days) + '</span></span>' +
+      '<span class="cd-unit"><span class="cd-lbl">ساعة</span><span class="cd-num" data-u="h">' + ar(c.hours) + '</span></span>' +
       '</span>' +
       '</span>';
   }
@@ -908,7 +908,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ taskId: taskId }),
         keepalive: true          // survives the modal closing / a quick tab close
-      }).catch(function () {});
+      }).catch(function () { });
     } catch (e) { /* ignore */ }
   }
 
