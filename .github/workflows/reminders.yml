@@ -2,8 +2,13 @@ name: Task reminders
 
 on:
   schedule:
-    # every 5 minutes — GitHub queues these, so expect a few minutes of drift
-    - cron: '*/5 * * * *'
+    # Every 15 minutes, deliberately offset from the top of the hour.
+    #
+    # Do NOT lower this back to '*/5'. GitHub documents 5 minutes as the
+    # minimum but does not honour it on shared runners: sub-15-minute crons
+    # on low-traffic repos get deprioritised and dropped, and :00/:15/:30/:45
+    # are the most contended slots. Odd offsets land far more reliably.
+    - cron: '7,22,37,52 * * * *'
   workflow_dispatch:   # lets you run it by hand from the Actions tab
 
 concurrency:
