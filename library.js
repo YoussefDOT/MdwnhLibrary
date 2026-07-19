@@ -15,10 +15,10 @@
   // Vercel endpoint that pushes the moment a task is created. Leave empty and
   // the GitHub Actions sweep still delivers, just 15-40 minutes later.
   // e.g. 'https://mdwnh-notify-api.vercel.app/api/notify'  (see NOTIFICATIONS.md)
-  var NOTIFY_URL = 'https://notify-api-yosefbore3y-3820s-projects.vercel.app/api/notify';
+  var NOTIFY_URL = 'https://notify-api-pi.vercel.app/api/notify';
 
   // Replace with the public key printed by `npm run keys` (see NOTIFICATIONS.md).
-  var VAPID_PUBLIC_KEY = 'BIJexcgCnFbXBZRlZBasMGgWPacETxu3ZR8Mz1MzXUkI95PdfWdntrVIzpsAPK7yCfOUwELnuMjKbYX_N_JbXcc';
+  var VAPID_PUBLIC_KEY = 'BLh5zx0FiowxAYB88WAB6KlzAP9DU0ZQXG9S1Wj1THqhco0z6_4wDwvlzwRddHzRYt2TF5p2txyrpysE_idGjkE';
 
   var LS_USER = 'mdwnh.user';
   var LS_GROUPS = 'mdwnh.groups';
@@ -871,11 +871,41 @@
     return 'e' + h.toString(36);
   }
 
+  /* A PushSubscription is permanently bound to the VAPID key it was created
+     with. Rotate the key and every existing subscription keeps answering to
+     the old one, so the push service rejects each send with 403 and the user
+     sees nothing. Detect that and re-subscribe rather than making people
+     clear their site data. */
+  function keyOfSubscription(sub) {
+    try {
+      var raw = sub.options && sub.options.applicationServerKey;
+      if (!raw) return null;
+      var bytes = new Uint8Array(raw);
+      var bin = '';
+      for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+      return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    } catch (e) { return null; }
+  }
+
   function subscribePush(slug) {
     if (!pushSupported() || !VAPID_PUBLIC_KEY) return Promise.resolve(false);
     return navigator.serviceWorker.ready.then(function (reg) {
       return reg.pushManager.getSubscription().then(function (sub) {
-        if (sub) return sub;
+        if (sub) {
+          var bound = keyOfSubscription(sub);
+          if (!bound || bound === VAPID_PUBLIC_KEY) return sub;
+          console.log('[push] VAPID key rotated — re-subscribing this device');
+          var oldKey = subKey(sub.endpoint);
+          return sub.unsubscribe()
+            .catch(function () { /* unsubscribe can fail; subscribing again still works */ })
+            .then(function () {
+              dbDelete(ROOT + '/users/' + slug + '/push/' + oldKey);
+              return reg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlB64ToUint8(VAPID_PUBLIC_KEY)
+              });
+            });
+        }
         return reg.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlB64ToUint8(VAPID_PUBLIC_KEY)
