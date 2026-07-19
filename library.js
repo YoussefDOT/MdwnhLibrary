@@ -23,6 +23,7 @@
   var LS_USER = 'mdwnh.user';
   var LS_GROUPS = 'mdwnh.groups';
   var LS_SKIP = 'mdwnh.notifSkipped';
+  var LS_VAPID = 'mdwnh.vapidKey';
   var REFRESH_MS = 45000;
 
   /* ======================================================================
@@ -892,8 +893,15 @@
     return navigator.serviceWorker.ready.then(function (reg) {
       return reg.pushManager.getSubscription().then(function (sub) {
         if (sub) {
+          // Two independent signals. options.applicationServerKey is the
+          // authoritative one but is missing on some browsers, so fall back to
+          // the key we recorded when we last subscribed on this device.
           var bound = keyOfSubscription(sub);
-          if (!bound || bound === VAPID_PUBLIC_KEY) return sub;
+          var remembered = null;
+          try { remembered = localStorage.getItem(LS_VAPID); } catch (e) {}
+          var stale = (bound && bound !== VAPID_PUBLIC_KEY) ||
+                      (!bound && remembered && remembered !== VAPID_PUBLIC_KEY);
+          if (!stale) return sub;
           console.log('[push] VAPID key rotated — re-subscribing this device');
           var oldKey = subKey(sub.endpoint);
           return sub.unsubscribe()
@@ -914,10 +922,12 @@
     }).then(function (sub) {
       var j = sub.toJSON();
       var key = subKey(j.endpoint);
+      try { localStorage.setItem(LS_VAPID, VAPID_PUBLIC_KEY); } catch (e) {}
       return dbPut(ROOT + '/users/' + slug + '/push/' + key, {
         endpoint: j.endpoint,
         p256dh: j.keys.p256dh,
         auth: j.keys.auth,
+        vapid: VAPID_PUBLIC_KEY,     // lets the sender spot a stale binding
         ua: navigator.userAgent.slice(0, 120),
         ts: Date.now()
       }).then(function () {

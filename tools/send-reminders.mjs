@@ -82,8 +82,10 @@ async function pushTo(slug, subs, payload) {
         console.log(`  · dropping dead subscription ${slug}/${subId}`);
         await del(`${ROOT}/users/${slug}/push/${subId}`);
       } else if (code === 403) {
-        console.error(`  ✗ 403 for ${slug}/${subId} — VAPID keys here do not match ` +
-          `the key browsers subscribed with (VAPID_PUBLIC_KEY in library.js)`);
+        // Bound to a VAPID key we no longer hold — unusable forever. Drop it so
+        // the device re-registers with the current key on its next app open.
+        console.error(`  ✗ 403 for ${slug}/${subId} — stale VAPID binding, removing`);
+        await del(`${ROOT}/users/${slug}/push/${subId}`);
       } else {
         console.warn(`  · push failed for ${slug}/${subId}: ${code || err.message}`);
       }

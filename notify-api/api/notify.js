@@ -151,6 +151,15 @@ export default async function handler(req, res) {
           if (code === 404 || code === 410) {
             await del(`${ROOT}/users/${slug}/push/${subId}`);
             errors.push({ slug, subId, code, note: 'expired, removed' });
+          } else if (code === 403) {
+            // Bound to a VAPID key we no longer hold, so it can never receive
+            // anything again. Drop it: the device re-registers with the current
+            // key next time the app opens, instead of 403ing forever.
+            await del(`${ROOT}/users/${slug}/push/${subId}`);
+            errors.push({
+              slug, subId, code,
+              note: 'stale VAPID binding, removed — device will re-register on next open'
+            });
           } else {
             // Anything else -- 403 VAPID mismatch above all -- used to be
             // swallowed, which made "delivered nothing" indistinguishable from
