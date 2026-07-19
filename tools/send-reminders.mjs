@@ -66,8 +66,10 @@ function arabicDue(ms) {
 /* ---------- delivery ---------- */
 async function pushTo(slug, subs, payload) {
   let sent = 0;
+  let attempted = 0;
   for (const [subId, s] of Object.entries(subs || {})) {
     if (!s || !s.endpoint) continue;
+    attempted++;
     try {
       await webpush.sendNotification(
         { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
@@ -79,12 +81,15 @@ async function pushTo(slug, subs, payload) {
       if (code === 404 || code === 410) {
         console.log(`  · dropping dead subscription ${slug}/${subId}`);
         await del(`${ROOT}/users/${slug}/push/${subId}`);
+      } else if (code === 403) {
+        console.error(`  ✗ 403 for ${slug}/${subId} — VAPID keys here do not match ` +
+          `the key browsers subscribed with (VAPID_PUBLIC_KEY in library.js)`);
       } else {
         console.warn(`  · push failed for ${slug}/${subId}: ${code || err.message}`);
       }
     }
   }
-  return sent;
+  return { sent, attempted };
 }
 
 /* ---------- main ---------- */
@@ -114,9 +119,10 @@ async function main() {
     /* --- 1. brand new task --- */
     if (!notified.created) {
       console.log(`New task "${t.title}" -> ${assignees.length} member(s)`);
+      let sent = 0, attempted = 0;
       for (const slug of assignees) {
         const who = nameOf[slug] || slug;
-        totalSent += await pushTo(slug, users?.[slug]?.push, {
+        const r = await pushTo(slug, users?.[slug]?.push, {
           title: `يا ${who}! لديك مهمة جديدة`,
           body: `${t.emoji || '📌'} ${t.title} — ${arabicDue(t.due)}`,
           image: `${SITE}/MdwnhMembers/${slug}.png`,
@@ -124,8 +130,16 @@ async function main() {
           url: `${SITE}/`,
           tag: `task-new-${id}`
         });
+        sent += r.sent; attempted += r.attempted;
       }
-      await put(`${ROOT}/tasks/${id}/notified/created`, true);
+      totalSent += sent;
+      // Don't claim delivery we didn't achieve -- leave it unflagged so the
+      // next sweep retries once whatever broke is fixed.
+      if (sent > 0 || attempted === 0) {
+        await put(`${ROOT}/tasks/${id}/notified/created`, true);
+      } else {
+        console.error(`  ✗ nothing delivered for "${t.title}" — leaving unflagged for retry`);
+      }
     }
 
     /* --- 2. one day out --- */
@@ -134,7 +148,7 @@ async function main() {
         console.log(`1-day warning "${t.title}" -> ${pending.length} member(s)`);
         for (const slug of pending) {
           const who = nameOf[slug] || slug;
-          totalSent += await pushTo(slug, users?.[slug]?.push, {
+          const r = await pushTo(slug, users?.[slug]?.push, {
             title: `يا ${who}! بقي يوم واحد ⏳`,
             body: `${t.emoji || '📌'} ${t.title} — ${arabicDue(t.due)}`,
             image: `${SITE}/MdwnhMembers/${slug}.png`,
@@ -143,8 +157,11 @@ async function main() {
             tag: `task-day1-${id}`,
             urgent: true
           });
+          totalSent += r.sent;
         }
       }
+      // day1 is time-boxed: retrying past the deadline is pointless, so flag
+      // it regardless and let the countdown speak for itself.
       await put(`${ROOT}/tasks/${id}/notified/day1`, true);
     }
   }

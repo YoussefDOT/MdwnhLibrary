@@ -66,11 +66,27 @@ function arabicDue(ms) {
 export default async function handler(req, res) {
   cors(req, res);
   if (req.method === 'OPTIONS') return res.status(204).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
   const PUB = process.env.VAPID_PUBLIC;
   const PRIV = process.env.VAPID_PRIVATE;
   const SUBJ = process.env.VAPID_SUBJECT || 'mailto:noreply@example.com';
+
+  // GET is a health check. The public key is public by definition, so echoing
+  // it is safe -- and it is the fastest way to catch the failure mode where
+  // Vercel holds a different keypair than the one browsers subscribed with,
+  // which makes every push 403 with no other visible symptom.
+  if (req.method === 'GET') {
+    return res.status(200).json({
+      ok: true,
+      vapidPublic: PUB || null,
+      vapidPrivateSet: Boolean(PRIV),
+      subject: SUBJ,
+      hint: 'vapidPublic must equal VAPID_PUBLIC_KEY in library.js'
+    });
+  }
+
+  if (req.method !== 'POST') return res.status(405).json({ error: 'GET or POST only' });
+
   if (!PUB || !PRIV) {
     return res.status(500).json({ error: 'VAPID keys not configured on the server' });
   }
@@ -107,6 +123,9 @@ export default async function handler(req, res) {
     if (roster && roster.members) for (const m of roster.members) nameOf[m.slug] = m.name;
 
     let sent = 0;
+    let attempted = 0;
+    const errors = [];
+
     for (const slug of assignees) {
       const subs = (users && users[slug] && users[slug].push) || {};
       const payload = JSON.stringify({
@@ -120,6 +139,7 @@ export default async function handler(req, res) {
 
       for (const [subId, s] of Object.entries(subs)) {
         if (!s || !s.endpoint) continue;
+        attempted++;
         try {
           await webpush.sendNotification(
             { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
@@ -127,16 +147,37 @@ export default async function handler(req, res) {
           );
           sent++;
         } catch (err) {
-          if (err.statusCode === 404 || err.statusCode === 410) {
+          const code = err.statusCode;
+          if (code === 404 || code === 410) {
             await del(`${ROOT}/users/${slug}/push/${subId}`);
+            errors.push({ slug, subId, code, note: 'expired, removed' });
+          } else {
+            // Anything else -- 403 VAPID mismatch above all -- used to be
+            // swallowed, which made "delivered nothing" indistinguishable from
+            // "delivered everything". Report it instead.
+            errors.push({
+              slug, subId, code: code || null,
+              body: String(err.body || err.message || '').slice(0, 200),
+              note: code === 403
+                ? 'VAPID mismatch: Vercel keys differ from the key browsers subscribed with'
+                : undefined
+            });
           }
         }
       }
     }
 
-    // Only flag after delivery, so a crash mid-send leaves the sweep to retry.
-    await put(`${ROOT}/tasks/${taskId}/notified/created`, true);
-    return res.status(200).json({ sent, assignees: assignees.length });
+    // Only claim the task if something actually landed. If every send failed we
+    // leave the flag alone so the GitHub sweep retries once the cause is fixed
+    // -- flagging on total failure is how the first silent failure happened.
+    const worthFlagging = sent > 0 || attempted === 0;
+    if (worthFlagging) await put(`${ROOT}/tasks/${taskId}/notified/created`, true);
+
+    return res.status(sent > 0 || attempted === 0 ? 200 : 502).json({
+      sent, attempted, assignees: assignees.length,
+      flagged: worthFlagging,
+      errors: errors.length ? errors : undefined
+    });
   } catch (e) {
     return res.status(500).json({ error: String(e.message || e) });
   }
