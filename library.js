@@ -12,6 +12,11 @@
   var ROOT = 'mdwnhLibrary';        // our own namespace — nothing else is touched
   var PLAYERS = 'players';          // existing points data (read-only for us)
 
+  // Vercel endpoint that pushes the moment a task is created. Leave empty and
+  // the GitHub Actions sweep still delivers, just 15-40 minutes later.
+  // e.g. 'https://mdwnh-notify-api.vercel.app/api/notify'  (see NOTIFICATIONS.md)
+  var NOTIFY_URL = '';
+
   // Replace with the public key printed by `npm run keys` (see NOTIFICATIONS.md).
   var VAPID_PUBLIC_KEY = 'BIJexcgCnFbXBZRlZBasMGgWPacETxu3ZR8Mz1MzXUkI95PdfWdntrVIzpsAPK7yCfOUwELnuMjKbYX_N_JbXcc';
 
@@ -833,6 +838,7 @@
     };
     dbPost(ROOT + '/tasks', t).then(function (res) {
       tasks[res.name] = t;
+      pingNotify(res.name);
       $('#addModal').hidden = true;
       toast('تمت إضافة المهمة وسيصل الإشعار للمكلَّفين');
       resetDraft();
@@ -888,6 +894,22 @@
       console.warn('[push] subscribe failed', e);
       return false;
     });
+  }
+
+  /* Best-effort nudge so assignees hear about a task in ~1s instead of waiting
+     for the cron. Deliberately not awaited and never surfaced as an error: the
+     GitHub Actions sweep is the safety net, so a failure here only costs
+     latency, never the notification itself. */
+  function pingNotify(taskId) {
+    if (!NOTIFY_URL) return;
+    try {
+      fetch(NOTIFY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taskId: taskId }),
+        keepalive: true          // survives the modal closing / a quick tab close
+      }).catch(function () {});
+    } catch (e) { /* ignore */ }
   }
 
   /* ======================================================================

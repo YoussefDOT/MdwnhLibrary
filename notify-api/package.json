@@ -1,0 +1,10 @@
+{
+  "name": "mdwnh-notify-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Instant push endpoint for مكتبة المدوّنة. Deployed separately to Vercel; the static site itself still ships from GitHub Pages.",
+  "dependencies": {
+    "web-push": "^3.6.7"
+  }
+}
