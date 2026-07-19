@@ -314,122 +314,147 @@ html[dir=rtl] .group.collapsed .tri svg{transform:rotate(90deg)}
   text-align:center;padding:6px 0 12px;
 }
 
-.task-list{display:grid;gap:12px}
+.task-list{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(178px,1fr));
+  gap:clamp(12px,1.8vw,18px);
+}
 
 /* ---------- one task card ---------- */
 .task{
   position:relative;overflow:hidden;isolation:isolate;
-  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
-  padding:16px 18px;border-radius:var(--r-md);
-  background:#fff;box-shadow:var(--shadow-sm);
-  border:1.5px solid var(--line);
-  border-inline-start:6px solid var(--c);
-  transition:transform .35s var(--ease),box-shadow .35s var(--ease),background .5s var(--ease);
+  aspect-ratio:1/2;
+  display:flex;flex-direction:column;align-items:center;
+  gap:9px;
+  padding:22px 15px 16px;
+  border-radius:26px;
+  text-align:center;
+  color:var(--fg,#fff);
+  background:var(--c);
+  box-shadow:0 16px 34px -20px var(--c);
+  transition:transform .35s var(--ease),box-shadow .35s var(--ease);
   animation:taskIn .45s var(--ease) backwards;
   animation-delay:var(--d,0s);
 }
 @keyframes taskIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
-.task:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
+.task::before{
+  content:"";position:absolute;inset:0;z-index:-1;
+  background:linear-gradient(165deg,rgba(255,255,255,.18),transparent 58%);
+}
+.task:hover{transform:translateY(-5px);box-shadow:0 24px 44px -20px var(--c)}
 
 .task-emoji{
-  flex:0 0 auto;width:50px;height:50px;border-radius:16px;
-  display:grid;place-items:center;font-size:1.6rem;line-height:1;
-  background:color-mix(in srgb,var(--c) 16%,#fff);
+  flex:0 0 auto;
+  width:clamp(62px,38%,92px);aspect-ratio:1;border-radius:50%;
+  display:grid;place-items:center;
+  font-size:clamp(1.8rem,8vw,2.5rem);line-height:1;
+  background:rgba(0,0,0,.17);
+  margin-bottom:2px;
 }
-.task-main{flex:1 1 190px;min-width:0}
 .task-title{
-  display:block;font-size:1.05rem;font-weight:800;line-height:1.35;
+  font-size:1rem;font-weight:900;line-height:1.35;
   overflow-wrap:anywhere;
 }
-.task-nudge{
-  display:block;font-size:.79rem;font-weight:600;color:var(--muted);
-  margin-top:3px;line-height:1.5;
-}
-.task.urgent .task-nudge{color:var(--fire)}
+.task-due{font-size:.74rem;font-weight:700;opacity:.82;line-height:1.4}
+.task-nudge{font-size:.71rem;font-weight:600;opacity:.8;line-height:1.5}
 
-/* countdown blocks */
-.cd{display:flex;align-items:stretch;gap:7px;flex:0 0 auto}
-.cd-unit{
-  min-width:52px;padding:7px 10px;border-radius:14px;text-align:center;
-  background:color-mix(in srgb,var(--c) 13%,#fff);
-  border:1.5px solid color-mix(in srgb,var(--c) 26%,#fff);
-}
-.cd-lbl{display:block;font-size:.62rem;font-weight:800;color:color-mix(in srgb,var(--c) 70%,var(--ink));letter-spacing:.3px;opacity:.9}
-.cd-num{display:block;font-size:1.32rem;font-weight:900;line-height:1.1;color:color-mix(in srgb,var(--c) 82%,var(--ink));font-variant-numeric:tabular-nums}
-.cd-pre{
-  align-self:center;font-size:.72rem;font-weight:800;color:var(--muted);
-  writing-mode:initial;margin-inline-end:2px;
-}
-.task.overdue .cd-unit{background:#ffe9e3;border-color:#ffc9b8}
-.task.overdue .cd-num,.task.overdue .cd-lbl{color:var(--red)}
-.cd-late{
-  padding:8px 14px;border-radius:14px;background:#ffe9e3;border:1.5px solid #ffc9b8;
-  font-size:.84rem;font-weight:900;color:var(--red);align-self:center;
-}
-
-/* assignee avatars (multi-member only) */
-.who{display:flex;align-items:center;flex:0 0 auto}
+/* assignee avatars — centred, small */
+.who{display:flex;align-items:center;justify-content:center;flex:0 0 auto}
 .who img{
-  width:30px;height:30px;border-radius:50%;object-fit:cover;
-  border:2.5px solid #fff;background:#f0ede8;
-  margin-inline-start:-9px;
-  box-shadow:0 3px 8px -3px rgba(38,38,38,.5);
+  width:26px;height:26px;border-radius:50%;object-fit:cover;
+  border:2px solid rgba(255,255,255,.85);background:#f0ede8;
+  margin-inline-start:-7px;
   transition:transform .3s var(--ease);
 }
 .who img:first-child{margin-inline-start:0}
-.who img.done{filter:grayscale(1);opacity:.5}
-.who img:hover{transform:translateY(-3px) scale(1.12);z-index:2}
+.who img.done{filter:grayscale(1);opacity:.55}
+.who img:hover{transform:translateY(-3px) scale(1.14);z-index:2}
 .who .more{
-  width:30px;height:30px;border-radius:50%;margin-inline-start:-9px;
-  display:grid;place-items:center;font-size:.68rem;font-weight:900;color:var(--muted);
-  background:#f0ede8;border:2.5px solid #fff;
+  width:26px;height:26px;border-radius:50%;margin-inline-start:-7px;
+  display:grid;place-items:center;font-size:.62rem;font-weight:900;
+  color:var(--fg,#fff);background:rgba(0,0,0,.24);
+  border:2px solid rgba(255,255,255,.85);
 }
 
+/* countdown — تبقى sits above the boxes */
+.cd-wrap{
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  margin-top:auto;width:100%;
+}
+.cd-pre{font-size:.72rem;font-weight:800;opacity:.85}
+.cd{display:flex;gap:7px;justify-content:center}
+.cd-unit{
+  min-width:50px;padding:6px 9px;border-radius:13px;
+  background:rgba(0,0,0,.18);
+}
+.cd-lbl{display:block;font-size:.6rem;font-weight:700;opacity:.85;letter-spacing:.2px}
+.cd-num{display:block;font-size:1.18rem;font-weight:900;line-height:1.15;font-variant-numeric:tabular-nums}
+.cd-late{
+  padding:8px 14px;border-radius:13px;background:rgba(0,0,0,.24);
+  font-size:.8rem;font-weight:900;
+}
+
+/* تم button */
 .task-do{
-  flex:0 0 auto;width:44px;height:44px;border-radius:15px;border:none;padding:0;cursor:pointer;
-  display:grid;place-items:center;color:#fff;
-  background:linear-gradient(135deg,var(--c),color-mix(in srgb,var(--c) 62%,#fff));
-  box-shadow:0 10px 22px -12px var(--c);
-  transition:transform .3s var(--ease),filter .3s var(--ease);
+  width:100%;flex:0 0 auto;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  padding:11px;border-radius:15px;border:none;cursor:pointer;
+  font-family:inherit;font-size:.92rem;font-weight:900;
+  background:#fff;color:color-mix(in srgb,var(--c) 72%,#262626);
+  box-shadow:0 8px 18px -10px rgba(0,0,0,.55);
+  transition:transform .28s var(--ease),filter .28s var(--ease);
 }
-.task-do svg{width:22px;height:22px}
-.task-do:hover{transform:scale(1.08)}
-.task-do:active{transform:scale(.94)}
-.task-do:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.task-do svg{width:17px;height:17px}
+.task-do:hover{transform:translateY(-2px);filter:brightness(.97)}
+.task-do:active{transform:translateY(0) scale(.97)}
+.task-do:focus-visible{outline:3px solid #fff;outline-offset:2px}
 
-/* completed look: tint + angled stripes */
-.task.done{
-  background:color-mix(in srgb,var(--c) 11%,#fff);
-  border-color:color-mix(in srgb,var(--c) 30%,#fff);
+.task-done-badge{
+  width:100%;flex:0 0 auto;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  padding:11px;border-radius:15px;
+  font-size:.88rem;font-weight:900;
+  background:rgba(0,0,0,.2);color:var(--fg,#fff);
 }
+.task-done-badge svg{width:16px;height:16px}
+
+/* leader-only delete */
+.task-del{
+  position:absolute;z-index:3;
+  inset-block-start:12px;inset-inline-start:12px;
+  width:30px;height:30px;border-radius:10px;border:none;padding:0;cursor:pointer;
+  display:grid;place-items:center;
+  background:rgba(0,0,0,.2);color:var(--fg,#fff);opacity:.7;
+  transition:opacity .28s var(--ease),background .28s var(--ease),transform .28s var(--ease);
+}
+.task-del svg{width:14px;height:14px}
+.task-del:hover{opacity:1;background:rgba(0,0,0,.42);transform:scale(1.08)}
+.task-del:focus-visible{outline:2px solid #fff;outline-offset:2px}
+
+/* completed: angled stripes + drained colour */
+.task.done{filter:saturate(.72)}
 .task.done::after{
   content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
   background:repeating-linear-gradient(
     -45deg,
-    color-mix(in srgb,var(--c) 17%,transparent) 0 10px,
-    transparent 10px 22px
+    rgba(0,0,0,.16) 0 11px,
+    transparent 11px 24px
   );
   animation:stripeIn .55s var(--ease) backwards;
 }
-@keyframes stripeIn{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
-.task.done .task-title{text-decoration:line-through;text-decoration-thickness:2px;opacity:.62}
-.task.done .task-nudge,.task.done .cd{opacity:.5}
-.task.done .task-emoji{filter:saturate(.65)}
-.task-done-badge{
-  display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;
-  font-size:.8rem;font-weight:900;color:color-mix(in srgb,var(--c) 78%,var(--ink));
-  background:#fff;border:1.5px solid color-mix(in srgb,var(--c) 34%,#fff);
-  padding:9px 14px;border-radius:14px;
-}
-.task-done-badge svg{width:15px;height:15px}
+@keyframes stripeIn{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
+.task.done .task-title{text-decoration:line-through;text-decoration-thickness:2px;opacity:.7}
+.task.done .task-nudge,.task.done .cd-wrap{opacity:.62}
 
-/* pop animation when marking complete */
 @keyframes taskCheer{
   0%{transform:scale(1)}
-  35%{transform:scale(1.03) rotate(.5deg)}
+  35%{transform:scale(1.04) rotate(.6deg)}
   100%{transform:scale(1)}
 }
 .task.cheer{animation:taskCheer .55s var(--ease)}
+
+/* overdue */
+.task.overdue .cd-unit{background:rgba(0,0,0,.3)}
 
 /* ---------- empty state ---------- */
 .no-tasks{
@@ -586,6 +611,17 @@ html[dir=rtl] .subgroup.collapsed .tri svg{transform:rotate(90deg)}
 .em.on{border-color:var(--ink);background:#fff;transform:scale(1.08)}
 .em:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 
+.emoji-any{display:flex;align-items:center;gap:10px;margin-top:2px}
+.emoji-any input{
+  width:66px;flex:0 0 auto;text-align:center;
+  font-family:inherit;font-size:1.25rem;line-height:1;
+  padding:9px 6px;border-radius:14px;
+  border:2px solid var(--line);background:#faf9f7;color:var(--ink);
+  transition:border-color .3s var(--ease),background .3s var(--ease);
+}
+.emoji-any input:focus{outline:none;border-color:var(--gold);background:#fff}
+.emoji-any span{font-size:.78rem;font-weight:600;color:var(--muted)}
+
 /* in-site calendar */
 .cal{border:1.5px solid var(--line);border-radius:18px;padding:14px;background:#faf9f7}
 .cal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
@@ -656,7 +692,7 @@ html[dir=rtl] .subgroup.collapsed .tri svg{transform:rotate(90deg)}
   border:2.5px solid #fff;box-shadow:0 6px 14px -8px rgba(38,38,38,.6);
   transition:transform .25s var(--ease);
 }
-.person span{
+.person .pname{
   font-size:.76rem;font-weight:700;color:var(--ink);text-align:center;line-height:1.3;
   overflow:hidden;text-overflow:ellipsis;width:100%;
 }
@@ -715,14 +751,12 @@ html[dir=rtl] .subgroup.collapsed .tri svg{transform:rotate(90deg)}
   .me-strip{flex-wrap:wrap;gap:12px}
   .me-actions{width:100%}
   .me-actions .mini-btn{flex:1;justify-content:center}
-  .task{gap:11px;padding:14px}
-  .task-main{flex:1 1 100%;order:3}
-  .task-emoji{width:44px;height:44px;font-size:1.4rem}
-  .cd-unit{min-width:46px;padding:6px 8px}
-  .cd-num{font-size:1.15rem}
-  .who{order:4}
-  .task-do{order:5;margin-inline-start:auto}
-  .task-done-badge{order:5;margin-inline-start:auto}
+  .task-list{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:11px}
+  .task{padding:18px 12px 13px;gap:7px;border-radius:22px}
+  .task-title{font-size:.92rem}
+  .cd-unit{min-width:44px;padding:5px 7px}
+  .cd-num{font-size:1.05rem}
+  .task-do,.task-done-badge{padding:10px;font-size:.85rem}
   .group-head .tag{display:none}
   .people{grid-template-columns:repeat(auto-fill,minmax(72px,1fr))}
   .sheet-body{padding:18px 18px 22px}

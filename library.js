@@ -89,6 +89,7 @@
     plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
     out: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>',
     bell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>',
+    trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/><path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg>',
     undo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h12a5 5 0 0 1 0 10H9"/><path d="M7 4L3 8l4 4"/></svg>'
   };
 
@@ -389,13 +390,33 @@
   function cdHtml(t) {
     var c = countdown(t.due);
     if (c.late) {
-      return '<span class="cd"><span class="cd-late">تأخّرت ' + ar(c.days) + ' يوم</span></span>';
+      return '<span class="cd-wrap"><span class="cd">' +
+        '<span class="cd-late">تأخّرت ' + ar(c.days) + ' يوم</span></span></span>';
     }
-    return '<span class="cd" data-due="' + t.due + '">' +
+    return '<span class="cd-wrap">' +
       '<span class="cd-pre">تبقى</span>' +
-      '<span class="cd-unit"><span class="cd-lbl">يوم</span><span class="cd-num" data-u="d">' + ar(c.days) + '</span></span>' +
-      '<span class="cd-unit"><span class="cd-lbl">ساعة</span><span class="cd-num" data-u="h">' + ar(c.hours) + '</span></span>' +
+      '<span class="cd" data-due="' + t.due + '">' +
+        '<span class="cd-unit"><span class="cd-lbl">يوم</span><span class="cd-num" data-u="d">' + ar(c.days) + '</span></span>' +
+        '<span class="cd-unit"><span class="cd-lbl">ساعة</span><span class="cd-num" data-u="h">' + ar(c.hours) + '</span></span>' +
+      '</span>' +
       '</span>';
+  }
+
+  /* White text is unreadable on the lighter task colours (gold), so pick a
+     foreground from the colour's perceived luminance. */
+  function readableOn(hex) {
+    var m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
+    if (!m) return '#fff';
+    var n = parseInt(m[1], 16);
+    var r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    var lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return lum > 0.68 ? '#2a2118' : '#fff';
+  }
+
+  function dueLabelOf(t) {
+    return new Date(t.due).toLocaleString('ar-EG', {
+      day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
+    });
   }
 
   function taskCard(t, i, opts) {
@@ -403,41 +424,43 @@
     var done = isDoneFor(t, isAdmin && opts.viewSlug ? opts.viewSlug : me.slug);
     var full = isFullyDone(t);
     var c = countdown(t.due);
+    var color = t.color || '#41b9a6';
     var el = document.createElement('article');
     el.className = 'task' +
       (done || (isAdmin && full) ? ' done' : '') +
       (c.late ? ' overdue' : '') +
       (!c.late && c.ms <= 864e5 ? ' urgent' : '') +
       (opts.fire ? ' fire' : '');
-    el.style.setProperty('--c', t.color || '#41b9a6');
+    el.style.setProperty('--c', color);
+    el.style.setProperty('--fg', readableOn(color));
     el.style.setProperty('--d', (i * 0.05) + 's');
     el.dataset.id = t.id;
 
-    var right;
+    var action;
     if (opts.archive && isDoneFor(t, me.slug)) {
       // one tap can complete a task, so the archive is where that gets undone
-      right = '<button class="task-do undo" type="button" title="تراجع عن الإتمام" ' +
-        'aria-label="تراجع عن إتمام المهمة">' + ICON.undo + '</button>';
+      action = '<button class="task-do undo" type="button" aria-label="تراجع عن إتمام المهمة">' +
+        ICON.undo + ' تراجع</button>';
     } else if (isAdmin) {
-      var n = assigneesOf(t).filter(function (s) { return isDoneFor(t, s); }).length;
-      var total = assigneesOf(t).length;
-      right = '<span class="task-done-badge">' + (full ? ICON.check : '') +
-        ' ' + ar(n) + '/' + ar(total) + '</span>';
+      var n = assigneesOf(t).filter(function (s2) { return isDoneFor(t, s2); }).length;
+      action = '<span class="task-done-badge">' + (full ? ICON.check : '') +
+        ' ' + ar(n) + '/' + ar(assigneesOf(t).length) + '</span>';
     } else if (done) {
-      right = '<span class="task-done-badge">' + ICON.check + ' تمّت</span>';
+      action = '<span class="task-done-badge">' + ICON.check + ' تمّت</span>';
     } else {
-      right = '<button class="task-do" type="button" title="وضع علامة إتمام" aria-label="إتمام المهمة">' + ICON.check + '</button>';
+      action = '<button class="task-do" type="button" aria-label="إتمام المهمة">' +
+        ICON.check + ' تم</button>';
     }
 
     el.innerHTML =
+      (isAdmin ? '<button class="task-del" type="button" title="حذف المهمة" aria-label="حذف المهمة">' + ICON.trash + '</button>' : '') +
       '<span class="task-emoji">' + esc(t.emoji || '📌') + '</span>' +
-      '<span class="task-main">' +
       '<span class="task-title">' + esc(t.title) + '</span>' +
-      '<span class="task-nudge">' + esc(done ? 'أحسنت، أتممتها.' : nudgeFor(c.ms)) + '</span>' +
-      '</span>' +
-      cdHtml(t) +
+      '<span class="task-due">' + esc(dueLabelOf(t)) + '</span>' +
       whoHtml(t, isAdmin) +
-      right;
+      '<span class="task-nudge">' + esc(done ? 'أحسنت، أتممتها.' : nudgeFor(c.ms)) + '</span>' +
+      cdHtml(t) +
+      action;
 
     var btn = $('.task-do', el);
     if (btn) {
@@ -446,6 +469,8 @@
         else completeTask(t.id, el);
       });
     }
+    var del = $('.task-del', el);
+    if (del) del.addEventListener('click', function () { deleteTask(t.id, t.title); });
     return el;
   }
 
@@ -498,6 +523,21 @@
     }).catch(function () {
       t.done[me.slug] = stamp;
       toast('تعذّر التراجع، حاول مجددًا');
+    });
+  }
+
+  function deleteTask(id, title) {
+    if (!isAdmin) return;
+    if (!window.confirm('حذف المهمة «' + title + '» نهائيًا؟\nسيختفي هذا من قوائم كل المكلَّفين.')) return;
+    var backup = tasks[id];
+    delete tasks[id];
+    renderTasks();
+    dbDelete(ROOT + '/tasks/' + id).then(function () {
+      toast('حُذفت المهمة');
+    }).catch(function () {
+      tasks[id] = backup;
+      renderTasks();
+      toast('تعذّر الحذف، حاول مجددًا');
     });
   }
 
@@ -662,7 +702,12 @@
       b.className = 'em' + (draft.emoji === e ? ' on' : '');
       b.textContent = e;
       b.setAttribute('aria-label', 'رمز ' + e);
-      b.addEventListener('click', function () { draft.emoji = e; renderEmojis(); });
+      b.addEventListener('click', function () {
+        draft.emoji = e;
+        var ci = $('#emojiCustom');
+        if (ci) ci.value = '';          // a preset wins over a stale custom value
+        renderEmojis();
+      });
       w.appendChild(b);
     });
   }
@@ -738,7 +783,7 @@
       b.type = 'button';
       b.className = 'person' + (draft.members[m.slug] ? ' on' : '');
       b.innerHTML = '<img src="' + esc(avatar(m.slug)) + '" alt="" loading="lazy">' +
-        '<span>' + esc(m.name) + '</span>' +
+        '<span class="pname">' + esc(m.name) + '</span>' +
         '<span class="tick">' + ICON.check + '</span>';
       b.setAttribute('aria-pressed', String(!!draft.members[m.slug]));
       b.addEventListener('click', function () {
@@ -768,6 +813,7 @@
     calCursor = new Date();
     $('#taskName').value = '';
     $('#calTime').value = '23:59';
+    var ci = $('#emojiCustom'); if (ci) ci.value = '';
     renderSwatches(); renderEmojis(); renderCal(); renderPicked(); renderPeople(); validateDraft();
   }
 
@@ -963,10 +1009,15 @@
       $('#tasksTag').textContent = 'لوحة القائد · كل مهام الفريق';
     }
 
-    // points
-    dbGet(PLAYERS + '/' + encodeURIComponent(me.dbKey) + '/totalPoints')
-      .then(function (p) { $('#mePts').textContent = ar(p || 0); })
-      .catch(function () { $('#mePts').textContent = '—'; });
+    // points — the leader has no score to show
+    var ptsEl = $('.me-pts');
+    if (isAdmin) {
+      if (ptsEl) ptsEl.hidden = true;
+    } else {
+      dbGet(PLAYERS + '/' + encodeURIComponent(me.dbKey) + '/totalPoints')
+        .then(function (p) { $('#mePts').textContent = ar(p || 0); })
+        .catch(function () { $('#mePts').textContent = '—'; });
+    }
 
     // favourites
     dbGet(ROOT + '/users/' + me.slug + '/favourites')
@@ -1039,6 +1090,12 @@
     if (save) save.addEventListener('click', saveTask);
     var nameIn = $('#taskName');
     if (nameIn) nameIn.addEventListener('input', validateDraft);
+    var emIn = $('#emojiCustom');
+    if (emIn) emIn.addEventListener('input', function () {
+      var v = emIn.value.trim();
+      if (v) { draft.emoji = v; renderEmojis(); }       // renderEmojis clears preset highlight
+      else { draft.emoji = EMOJIS[0]; renderEmojis(); }
+    });
     var timeIn = $('#calTime');
     if (timeIn) timeIn.addEventListener('change', function () {
       if (!draft.due) return;
