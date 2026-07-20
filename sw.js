@@ -76,9 +76,9 @@ self.addEventListener('push', (e) => {
   const title = d.title || 'مكتبة المدوّنة';
   const opts = {
     body: d.body || '',
-    icon: d.icon || './assets/icon-192.png',
-    badge: './assets/icon-192.png',
-    image: d.image || undefined,          // the member's avatar
+    icon: d.icon || './assets/icon-192.png',   // the member's avatar
+    badge: './assets/badge.png',               // white-filled brand mark (status bar)
+    image: d.image || './assets/task-banner.png',
     tag: d.tag || 'mdwnh-task',
     renotify: true,
     dir: 'rtl',

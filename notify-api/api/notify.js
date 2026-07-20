@@ -131,8 +131,7 @@ export default async function handler(req, res) {
       const payload = JSON.stringify({
         title: `يا ${nameOf[slug] || slug}! لديك مهمة جديدة`,
         body: `${task.emoji || '📌'} ${task.title} — ${arabicDue(task.due)}`,
-        image: `${SITE}/MdwnhMembers/${slug}.png`,
-        icon: `${SITE}/assets/icon-192.png`,
+        icon: `${SITE}/MdwnhMembers/${slug}.png`,
         url: `${SITE}/`,
         tag: `task-new-${taskId}`
       });

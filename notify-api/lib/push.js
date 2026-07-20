@@ -64,8 +64,7 @@ export function newTaskPayload(task, taskId, slug, who) {
   return {
     title: `يا ${who}! لديك مهمة جديدة`,
     body: `${task.emoji || '📌'} ${task.title} — ${arabicDue(task.due)}`,
-    image: `${SITE}/MdwnhMembers/${slug}.png`,
-    icon: `${SITE}/assets/icon-192.png`,
+    icon: `${SITE}/MdwnhMembers/${slug}.png`,
     url: `${SITE}/`,
     tag: `task-new-${taskId}`
   };
@@ -75,8 +74,7 @@ export function day1Payload(task, taskId, slug, who) {
   return {
     title: `يا ${who}! بقي يوم واحد ⏳`,
     body: `${task.emoji || '📌'} ${task.title} — ${arabicDue(task.due)}`,
-    image: `${SITE}/MdwnhMembers/${slug}.png`,
-    icon: `${SITE}/assets/icon-192.png`,
+    icon: `${SITE}/MdwnhMembers/${slug}.png`,
     url: `${SITE}/`,
     tag: `task-day1-${taskId}`,
     urgent: true

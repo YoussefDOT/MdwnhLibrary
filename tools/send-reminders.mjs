@@ -127,8 +127,7 @@ async function main() {
         const r = await pushTo(slug, users?.[slug]?.push, {
           title: `يا ${who}! لديك مهمة جديدة`,
           body: `${t.emoji || '📌'} ${t.title} — ${arabicDue(t.due)}`,
-          image: `${SITE}/MdwnhMembers/${slug}.png`,
-          icon: `${SITE}/assets/icon-192.png`,
+          icon: `${SITE}/MdwnhMembers/${slug}.png`,
           url: `${SITE}/`,
           tag: `task-new-${id}`
         });
@@ -153,8 +152,7 @@ async function main() {
           const r = await pushTo(slug, users?.[slug]?.push, {
             title: `يا ${who}! بقي يوم واحد ⏳`,
             body: `${t.emoji || '📌'} ${t.title} — ${arabicDue(t.due)}`,
-            image: `${SITE}/MdwnhMembers/${slug}.png`,
-            icon: `${SITE}/assets/icon-192.png`,
+            icon: `${SITE}/MdwnhMembers/${slug}.png`,
             url: `${SITE}/`,
             tag: `task-day1-${id}`,
             urgent: true
