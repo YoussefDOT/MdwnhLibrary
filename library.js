@@ -1165,7 +1165,7 @@
     $('#notifNagBtn').addEventListener('click', reopenNotifGate);
     $('#archBtn').addEventListener('click', openArchive);
 
-    $$('[data-close]').forEach(function (b) {
+    $$('.modal [data-close]').forEach(function (b) {
       b.addEventListener('click', function () { $('#' + b.dataset.close).hidden = true; });
     });
     $$('.modal').forEach(function (m) {
