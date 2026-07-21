@@ -30,10 +30,19 @@
 
   const MEMBERS = [
     'ابو مزاحم','الشعيرة','أبو بندر','جمانة','خالد حسن','خالد','رجب','سحاب',
-    'سراج','سعيد','شارد','شفق','طه','عاصم','علي مجدي','عمر','فرات','مايتو',
+    'شارد','شفق','طه','عاصم','علي مجدي','عمر','فرات','مايتو',
     'محمد سمير','مصطفى','ملك','منة','مورو','نجود','نواف','ورقاء','يوسف'
   ];
-  const avatarUrl = (name) => 'MdwnhMembers/' + encodeURIComponent(name) + '.png';
+  // avatar files on disk are keyed by the roster `slug` (members.json), not the Arabic display name
+  const NAME_TO_SLUG = {
+    'ابو مزاحم': 'abu-muzahim', 'الشعيرة': 'al-shaeera', 'أبو بندر': 'abu-bandar',
+    'جمانة': 'jumana', 'خالد حسن': 'khaled-hassan', 'خالد': 'khaled', 'رجب': 'rajab',
+    'سحاب': 'sahab', 'شارد': 'shared', 'شفق': 'shafaq', 'طه': 'taha', 'عاصم': 'asem',
+    'علي مجدي': 'ali-magdy', 'عمر': 'omar', 'فرات': 'furat', 'مايتو': 'maito',
+    'محمد سمير': 'mohamed-samier', 'مصطفى': 'mostafa', 'ملك': 'malak', 'منة': 'menna',
+    'مورو': 'moro', 'نجود': 'njoud', 'نواف': 'nawaf', 'ورقاء': 'warqa', 'يوسف': 'youssef'
+  };
+  const avatarUrl = (name) => 'MdwnhMembers/' + (NAME_TO_SLUG[name] || encodeURIComponent(name)) + '.png';
 
   const WEEKDAYS = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
 
@@ -742,17 +751,23 @@
       created: editing.id && tasks[editing.id] ? (tasks[editing.id].created || Date.now()) : Date.now(),
       updated: Date.now()
     };
+    const isNew = !editing.id;
     const target = editing.id
       ? fb.ref(db, ROOT + '/tasks/' + editing.id)
       : fb.push(fb.ref(db, ROOT + '/tasks'));
+    const id = isNew ? target.key : editing.id;
+    const date = editing.date;
     const btn = $('psEdSave');
     btn.disabled = true;
     fb.set(target, data)
       .then(() => {
         btn.disabled = false;
+        tasks[id] = data;   // optimistic — onValue will confirm
         closeLayer('psEditor');
-        toast(editing.id ? 'تم تحديث المهمة ✓' : 'أُضيفت المهمة ✓');
+        toast(isNew ? 'أُضيفت المهمة ✓' : 'تم تحديث المهمة ✓');
         editing = null;
+        renderCalendar();
+        if (sheetDate && $('psSheet').classList.contains('open')) renderSheet(date);
       })
       .catch(() => { btn.disabled = false; toast('تعذّر الحفظ — حاول مجددًا'); });
   });
