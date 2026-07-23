@@ -15,7 +15,9 @@
 
 /* ---------- generic: hidden until app boots ---------- */
 body.locked{overflow:hidden}
-body.locked .wrap{filter:blur(9px) saturate(.7);pointer-events:none;user-select:none}
+body.locked .appbar,
+body.locked .split,
+body.locked .tabbar{filter:blur(9px) saturate(.7);pointer-events:none;user-select:none}
 
 /* ==========================================================================
    1. LOGIN OVERLAY
@@ -157,7 +159,10 @@ html[dir=rtl] .group.collapsed .tri svg{transform:rotate(90deg)}
   display:grid;grid-template-rows:1fr;
   transition:grid-template-rows .45s var(--ease),opacity .35s var(--ease),margin .45s var(--ease);
 }
-.group-body>.group-inner{overflow:hidden;min-height:0}
+/* padding+matching negative margin: cancels out to the same visual position,
+   but gives hover states (translateY lifts on cards) headroom inside this
+   clip box instead of getting their top edge cropped off */
+.group-body>.group-inner{overflow:hidden;min-height:0;padding-block-start:10px;margin-block-start:-10px}
 .group.collapsed>.group-body{grid-template-rows:0fr;opacity:0;margin-bottom:-8px}
 
 @media(prefers-reduced-motion:reduce){
@@ -418,8 +423,8 @@ html[dir=rtl] .group.collapsed .tri svg{transform:rotate(90deg)}
 }
 .task-done-badge svg{width:16px;height:16px}
 
-/* leader-only delete */
-.task-del{
+/* leader-only edit (opens the add-task panel pre-filled; delete lives inside it now) */
+.task-edit{
   position:absolute;z-index:3;
   inset-block-start:12px;inset-inline-start:12px;
   width:30px;height:30px;border-radius:10px;border:none;padding:0;cursor:pointer;
@@ -427,9 +432,9 @@ html[dir=rtl] .group.collapsed .tri svg{transform:rotate(90deg)}
   background:rgba(0,0,0,.2);color:var(--fg,#fff);opacity:.7;
   transition:opacity .28s var(--ease),background .28s var(--ease),transform .28s var(--ease);
 }
-.task-del svg{width:14px;height:14px}
-.task-del:hover{opacity:1;background:rgba(0,0,0,.42);transform:scale(1.08)}
-.task-del:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.task-edit svg{width:14px;height:14px}
+.task-edit:hover{opacity:1;background:rgba(0,0,0,.42);transform:scale(1.08)}
+.task-edit:focus-visible{outline:2px solid #fff;outline-offset:2px}
 
 /* completed: angled stripes + drained colour */
 .task.done{filter:saturate(.72)}
@@ -524,7 +529,10 @@ html[dir=rtl] .group.collapsed .tri svg{transform:rotate(90deg)}
 .subgroup.collapsed .tri svg{transform:rotate(-90deg)}
 html[dir=rtl] .subgroup.collapsed .tri svg{transform:rotate(90deg)}
 .subgroup>.group-body{display:grid;grid-template-rows:1fr;transition:grid-template-rows .45s var(--ease),opacity .35s var(--ease)}
-.subgroup>.group-body>.group-inner{overflow:hidden;min-height:0}
+.subgroup>/* padding+matching negative margin: cancels out to the same visual position,
+   but gives hover states (translateY lifts on cards) headroom inside this
+   clip box instead of getting their top edge cropped off */
+.group-body>.group-inner{overflow:hidden;min-height:0;padding-block-start:10px;margin-block-start:-10px}
 .subgroup.collapsed>.group-body{grid-template-rows:0fr;opacity:0}
 
 .task.fire{
@@ -580,13 +588,13 @@ html[dir=rtl] .subgroup.collapsed .tri svg{transform:rotate(90deg)}
 
 .f-row{display:grid;gap:8px}
 .f-row>label{font-size:.85rem;font-weight:800;color:#5f594f}
-.f-row input[type=text]{
+.f-row>input[type=text]{
   font-family:inherit;font-size:.98rem;font-weight:600;
   padding:13px 16px;border-radius:14px;
   border:2px solid var(--line);background:#faf9f7;color:var(--ink);
   transition:border-color .3s var(--ease),background .3s var(--ease);
 }
-.f-row input[type=text]:focus{outline:none;border-color:var(--gold);background:#fff}
+.f-row>input[type=text]:focus{outline:none;border-color:var(--gold);background:#fff}
 
 /* colour swatches */
 .swatches{display:flex;gap:10px;flex-wrap:wrap}
@@ -613,9 +621,9 @@ html[dir=rtl] .subgroup.collapsed .tri svg{transform:rotate(90deg)}
 
 .emoji-any{display:flex;align-items:center;gap:10px;margin-top:2px}
 .emoji-any input{
-  width:66px;flex:0 0 auto;text-align:center;
-  font-family:inherit;font-size:1.25rem;line-height:1;
-  padding:9px 6px;border-radius:14px;
+  width:44px;height:44px;flex:0 0 auto;text-align:center;
+  font-family:inherit;font-size:1.15rem;line-height:1;
+  padding:0;border-radius:14px;
   border:2px solid var(--line);background:#faf9f7;color:var(--ink);
   transition:border-color .3s var(--ease),background .3s var(--ease);
 }
@@ -662,19 +670,20 @@ html[dir=rtl] .subgroup.collapsed .tri svg{transform:rotate(90deg)}
 /* chosen members preview + picker */
 .picked{display:flex;flex-wrap:wrap;gap:8px;min-height:44px;align-items:center}
 .picked .none{font-size:.83rem;font-weight:600;color:#b0a89d}
-.pill{
+/* scoped to #picked so it can't leak onto the task ".task.pill" list rows */
+.picked .pill{
   display:inline-flex;align-items:center;gap:7px;
   background:#faf9f7;border:1.5px solid var(--line);
   padding:5px 12px 5px 6px;border-radius:999px;
   font-size:.83rem;font-weight:700;
 }
-.pill img{width:26px;height:26px;border-radius:50%;object-fit:cover;background:#f0ede8}
-.pill button{
+.picked .pill img{width:26px;height:26px;border-radius:50%;object-fit:cover;background:#f0ede8}
+.picked .pill button{
   width:18px;height:18px;border-radius:50%;border:none;cursor:pointer;padding:0;
   display:grid;place-items:center;background:rgba(38,38,38,.1);color:var(--ink);
   transition:background .25s var(--ease)}
-.pill button:hover{background:var(--red);color:#fff}
-.pill button svg{width:9px;height:9px}
+.picked .pill button:hover{background:var(--red);color:#fff}
+.picked .pill button svg{width:9px;height:9px}
 
 .people{
   display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));
@@ -723,6 +732,8 @@ html[dir=rtl] .subgroup.collapsed .tri svg{transform:rotate(90deg)}
 .wide-btn:hover{transform:translateY(-2px);filter:brightness(1.04)}
 .wide-btn[disabled]{filter:grayscale(.65);opacity:.55;cursor:not-allowed;transform:none}
 .wide-btn.dark{background:linear-gradient(135deg,#3a3a3a,#262626);box-shadow:0 12px 26px -12px rgba(38,38,38,.9)}
+.wide-btn.danger{background:linear-gradient(135deg,var(--red),#c73a1f);box-shadow:0 12px 26px -12px rgba(229,75,42,.9)}
+.sheet-foot.edit-actions{display:grid;gap:10px}
 
 .empty-note{
   text-align:center;padding:30px 16px;
@@ -763,3 +774,591 @@ html[dir=rtl] .subgroup.collapsed .tri svg{transform:rotate(90deg)}
   .sheet-head{padding:16px 18px 14px}
   .sheet-foot{padding:14px 18px 18px}
 }
+
+/* ==========================================================================
+   8. REVAMP — link rows, tags, points, media picker, quicklinks, claim
+   Appended for the 2026 redesign. Light theme, same tokens.
+   ========================================================================== */
+
+.hint{font-weight:700;color:var(--muted)}
+
+/* ---------- me-strip: cleaner, panel-free ---------- */
+.me-strip{
+  background:none;border:none;box-shadow:none;
+  padding:4px 2px 2px;margin-bottom:16px;
+}
+.mini-btn.icon{padding:9px 12px;gap:5px}
+.mini-btn.icon #archCount{font-size:.78rem;font-weight:800}
+
+/* ---------- tasks: centred, compact, playful ---------- */
+.task-list{
+  display:flex;flex-wrap:wrap;justify-content:center;
+  gap:clamp(12px,1.8vw,18px);
+}
+.task{
+  width:clamp(150px,44vw,184px);
+  aspect-ratio:auto;
+  min-height:262px;
+}
+/* points sticker badge (top-end corner) */
+.task-pts{
+  position:absolute;z-index:3;
+  inset-block-start:9px;inset-inline-end:9px;
+  width:44px;height:44px;pointer-events:none;
+  animation:stickerPop .5s var(--spring) backwards;
+}
+.task-pts img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 5px 9px rgba(0,0,0,.4))}
+@keyframes stickerPop{from{opacity:0;transform:scale(.4) rotate(-16deg)}to{opacity:1;transform:none}}
+
+/* image banner replaces the emoji circle (2:1) */
+.task-img{
+  width:100%;aspect-ratio:2/1;flex:0 0 auto;
+  border-radius:16px;object-fit:cover;margin-bottom:2px;
+  box-shadow:0 8px 18px -10px rgba(0,0,0,.5);
+  background:rgba(0,0,0,.12);
+}
+
+/* tag pills */
+.task-tags{display:flex;flex-wrap:wrap;gap:5px;justify-content:center}
+.task-tag{
+  font-size:.62rem;font-weight:900;padding:3px 9px;border-radius:999px;
+  background:rgba(255,255,255,.92);color:var(--tc,#262626);
+  box-shadow:0 3px 8px -4px rgba(0,0,0,.4);
+}
+
+/* ---------- link rows (الروابط) ---------- */
+.link-list{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:clamp(10px,1.6vw,14px);
+}
+.lrow{
+  position:relative;overflow:hidden;isolation:isolate;
+  display:flex;align-items:center;gap:14px;
+  min-height:78px;padding:16px 18px;padding-inline-end:50px;
+  border-radius:var(--r-md);text-align:start;
+  text-decoration:none;color:var(--ink);cursor:pointer;
+  background:#fff;border:1.5px solid var(--line);
+  box-shadow:var(--shadow-sm);font-family:inherit;
+  transition:transform .38s var(--ease),box-shadow .38s var(--ease),border-color .38s var(--ease);
+}
+.lrow::before{
+  content:"";position:absolute;inset:0;z-index:-1;opacity:0;
+  background:linear-gradient(120deg,color-mix(in srgb,var(--c) 12%,#fff),transparent 60%);
+  transition:opacity .4s var(--ease);
+}
+.lrow .chip{
+  width:48px;height:48px;flex:0 0 auto;border-radius:15px;
+  display:grid;place-items:center;color:#fff;
+  background:linear-gradient(135deg,var(--c),color-mix(in srgb,var(--c) 62%,#fff));
+  box-shadow:0 9px 20px -10px var(--c);
+  transition:transform .4s var(--spring);
+}
+.lrow .chip svg{width:27px;height:27px;display:block}
+.lrow .txt{flex:1;min-width:0}
+.lrow .name{display:block;font-size:1.04rem;font-weight:800;line-height:1.25}
+.lrow .desc{display:block;font-size:.8rem;font-weight:600;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lrow .arrow{
+  position:absolute;inset-inline-end:16px;inset-block-end:15px;
+  width:17px;height:17px;color:var(--faint);
+  transition:transform .4s var(--ease),color .4s var(--ease);
+}
+.lrow:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);border-color:transparent}
+.lrow:hover::before{opacity:1}
+.lrow:hover .chip{transform:rotate(-6deg) scale(1.06)}
+.lrow:hover .arrow{transform:translateX(-5px);color:var(--c)}
+.lrow:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+
+/* star on link rows (light card) */
+.lrow .star{
+  inset-block-start:12px;inset-inline-end:12px;
+  background:rgba(38,38,38,.06);color:#b3aca2;backdrop-filter:none;opacity:.85;
+}
+.lrow .star:hover{background:rgba(38,38,38,.12);opacity:1}
+.lrow .star.on{background:#fff5da;color:var(--gold);box-shadow:0 4px 10px -5px rgba(243,192,43,.9)}
+
+.link-sep{
+  display:flex;align-items:center;gap:12px;
+  margin:20px 2px 14px;
+}
+.link-sep::before,.link-sep::after{content:"";flex:1;height:1.5px;border-radius:2px;background:var(--line)}
+.link-sep span{font-size:.8rem;font-weight:800;color:var(--muted);white-space:nowrap}
+
+@media(max-width:640px){
+  .link-list{grid-template-columns:1fr}
+}
+
+/* ---------- favourites: svg chips, quicklinks, add button ---------- */
+.fav-chip i{display:none}
+.fav-chip svg{width:25px;height:25px;color:#fff;display:block}
+.fav-chip.is-emoji{font-size:1.55rem;line-height:1}
+/* colour still shows behind an emoji quicklink — was a flat cream regardless of --c */
+.fav-chip.is-emoji.quick{background:linear-gradient(135deg,color-mix(in srgb,var(--c) 32%,#fff),color-mix(in srgb,var(--c) 10%,#fff))}
+.fav-chip .ql-x{
+  position:absolute;inset-block-start:-6px;inset-inline-end:-6px;
+  width:20px;height:20px;border-radius:50%;border:none;padding:0;cursor:pointer;
+  display:grid;place-items:center;
+  background:#fff;color:var(--red);box-shadow:0 3px 9px -3px rgba(0,0,0,.5);
+  opacity:0;transform:scale(.5);
+  transition:opacity .25s var(--ease),transform .25s var(--ease);
+}
+.fav-chip:hover .ql-x{opacity:1;transform:scale(1)}
+.fav-chip .ql-x svg{width:10px;height:10px;color:var(--red)}
+/* hover never fires on touch, so the delete button was unreachable on mobile */
+@media(hover:none),(max-width:640px){
+  .fav-chip .ql-x{opacity:1;transform:scale(1)}
+}
+.fav-add{
+  flex:0 0 auto;width:52px;height:52px;border-radius:16px;cursor:pointer;
+  display:grid;place-items:center;color:var(--muted);
+  background:#faf9f7;border:2px dashed var(--line-2);padding:0;
+  transition:transform .3s var(--ease),background .3s var(--ease),color .3s var(--ease),border-color .3s var(--ease);
+}
+.fav-add svg{width:22px;height:22px}
+.fav-add:hover{transform:translateY(-3px);background:#fff;color:var(--gold);border-color:var(--gold)}
+.fav-add:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+
+/* ---------- add-task: tags picker ---------- */
+.tag-picker{display:flex;flex-wrap:wrap;gap:9px}
+.tag-opt{
+  display:inline-flex;align-items:center;gap:7px;cursor:pointer;padding:0;
+  font-family:inherit;font-size:.86rem;font-weight:800;color:var(--ink);
+  background:#faf9f7;border:2px solid var(--line);
+  padding:9px 15px;border-radius:999px;
+  transition:transform .28s var(--ease),border-color .28s var(--ease),background .28s var(--ease),color .28s var(--ease);
+}
+.tag-opt .dot{width:11px;height:11px;border-radius:50%;background:var(--tc);flex:0 0 auto}
+.tag-opt:hover{transform:translateY(-2px);background:#fff}
+.tag-opt.on{border-color:var(--tc);background:color-mix(in srgb,var(--tc) 14%,#fff)}
+.tag-opt:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+
+/* ---------- add-task: points picker ---------- */
+.pts-picker{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.pts-opt{
+  width:60px;height:60px;border-radius:16px;cursor:pointer;padding:5px;
+  background:#faf9f7;border:2px solid var(--line);
+  display:grid;place-items:center;
+  transition:transform .28s var(--spring),border-color .28s var(--ease),background .28s var(--ease);
+}
+.pts-opt img{width:100%;height:100%;object-fit:contain}
+.pts-opt:hover{transform:translateY(-3px) scale(1.04);background:#fff}
+.pts-opt.on{border-color:var(--gold);background:#fff9e8;transform:scale(1.06);box-shadow:0 10px 20px -10px rgba(243,192,43,.9)}
+.pts-opt:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.pts-none{
+  font-family:inherit;font-size:.82rem;font-weight:800;color:var(--muted);cursor:pointer;
+  background:#faf9f7;border:2px solid var(--line);padding:10px 16px;border-radius:14px;
+  transition:background .28s var(--ease),color .28s var(--ease)}
+.pts-none.on{border-color:var(--ink);background:#fff;color:var(--ink)}
+
+/* ---------- add-task: emoji / image tabs ---------- */
+.media-tabs{display:inline-flex;gap:4px;background:#f1efe9;border-radius:14px;padding:4px;margin-bottom:4px}
+.media-tab{
+  font-family:inherit;font-size:.84rem;font-weight:800;color:var(--muted);cursor:pointer;
+  border:none;background:none;padding:8px 18px;border-radius:11px;
+  transition:background .28s var(--ease),color .28s var(--ease)}
+.media-tab.on{background:#fff;color:var(--ink);box-shadow:var(--shadow-sm)}
+.media-pane[hidden]{display:none}
+
+.dropzone{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  padding:26px 18px;border-radius:18px;cursor:pointer;text-align:center;
+  border:2px dashed var(--line-2);background:#faf9f7;color:var(--muted);
+  transition:background .28s var(--ease),border-color .28s var(--ease),color .28s var(--ease)}
+.dropzone svg{width:30px;height:30px}
+.dropzone b{font-size:.95rem;font-weight:900;color:var(--ink)}
+.dropzone span{font-size:.78rem;font-weight:600}
+.dropzone.drag,.dropzone:hover{border-color:var(--gold);background:#fff9e8;color:var(--ink)}
+.dropzone:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+
+/* chosen-image summary in the add-task panel — scaling/panning happens in the crop popup */
+.img-preview-row{display:flex;align-items:center;gap:14px}
+.img-preview{
+  width:140px;flex:0 0 auto;aspect-ratio:2/1;object-fit:cover;border-radius:14px;
+  background:#2a2724;box-shadow:0 8px 18px -10px rgba(0,0,0,.5);
+}
+.img-preview-actions{display:flex;flex-direction:column;gap:8px}
+
+.crop-stage{
+  position:relative;width:100%;aspect-ratio:2/1;overflow:hidden;
+  border-radius:16px;background:#2a2724;cursor:grab;touch-action:none;
+  box-shadow:inset 0 0 0 1.5px var(--line);
+}
+.crop-stage:active{cursor:grabbing}
+.crop-stage img{
+  position:absolute;top:0;left:0;transform-origin:0 0;
+  user-select:none;-webkit-user-drag:none;will-change:transform;
+  max-width:none;
+}
+.crop-ctl{display:flex;align-items:center;gap:12px;margin-top:12px}
+.crop-ctl label{font-size:.82rem;font-weight:800;color:#5f594f;flex:0 0 auto}
+.crop-ctl input[type=range]{flex:1;accent-color:var(--gold)}
+
+/* ---------- quicklink modal: live preview ---------- */
+.sheet.narrow{width:min(430px,100%)}
+.ql-preview-row{display:flex;align-items:center;gap:14px;margin-bottom:2px}
+.ql-preview-row .fav-chip{cursor:default;pointer-events:none;animation:none}
+.ql-preview-lbl{font-size:.82rem;font-weight:700;color:var(--muted)}
+
+/* ---------- quicklink modal icon picker: plain glyphs — colour lives in the preview only ---------- */
+.ql-icons{display:flex;flex-wrap:wrap;gap:9px}
+.ql-opt{
+  width:44px;height:44px;border-radius:14px;cursor:pointer;padding:0;
+  display:grid;place-items:center;color:var(--muted);
+  background:#faf9f7;border:2px solid var(--line);
+  transition:transform .26s var(--spring),border-color .26s var(--ease),background .26s var(--ease),color .26s var(--ease)}
+.ql-opt svg{width:21px;height:21px}
+.ql-opt:hover{transform:translateY(-3px) scale(1.05);background:#fff;color:var(--ink)}
+.ql-opt.on{border-color:var(--gold);background:#fff9e8;color:var(--ink);transform:scale(1.06)}
+.ql-opt:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+
+
+/* ==========================================================================
+   9. CLAIM POPUP
+   ========================================================================== */
+.claim-modal .claim-card{
+  position:relative;overflow:hidden;isolation:isolate;
+  width:min(360px,100%);text-align:center;
+  padding:34px 26px 22px;border-radius:30px;
+  background:#fff;border:1.5px solid var(--line);
+  box-shadow:var(--shadow-lg);
+  animation:cardPop .5s var(--spring) both;
+}
+.claim-burst{
+  position:absolute;inset:-40% -10% auto;height:60%;z-index:-1;
+  background:radial-gradient(60% 100% at 50% 0%,color-mix(in srgb,var(--c) 34%,#fff),transparent 70%);
+}
+.claim-avatar{
+  width:88px;height:88px;border-radius:50%;object-fit:cover;margin:0 auto 12px;display:block;
+  border:4px solid #fff;background:#f0ede8;
+  box-shadow:0 14px 30px -14px rgba(0,0,0,.5);
+}
+.claim-name{font-size:1.35rem;font-weight:900;margin-bottom:2px}
+.claim-task{font-size:.9rem;font-weight:700;color:var(--muted);margin-bottom:8px}
+.claim-sticker{
+  width:118px;height:118px;object-fit:contain;margin:2px auto 8px;display:block;
+  filter:drop-shadow(0 14px 24px rgba(0,0,0,.32));
+  animation:stickerPop .6s var(--spring) both .1s;
+}
+.claim-amount{font-size:.98rem;font-weight:800;color:var(--ink);margin-bottom:16px}
+.claim-amount b{color:var(--gold);font-size:1.15rem;font-weight:900}
+.claim-later{
+  width:100%;margin-top:8px;padding:11px;border:none;cursor:pointer;
+  font-family:inherit;font-size:.9rem;font-weight:800;color:var(--muted);
+  background:none;border-radius:14px;
+  transition:color .28s var(--ease),background .28s var(--ease)}
+.claim-later:hover{color:var(--ink);background:#faf9f7}
+
+/* ==========================================================================
+   10. APP-SHELL LAYOUT — 2026 rewrite
+   Top bar + resizable split (desktop) / swipeable pages (mobile).
+   ========================================================================== */
+
+/* ---------- top app bar (logo left, بدر filling the rest) ---------- */
+.appbar{
+  flex:0 0 auto;z-index:5;
+  display:flex;direction:ltr;align-items:center;gap:clamp(16px,3vw,28px);
+  padding:12px clamp(16px,3vw,34px);
+  min-height:var(--appbar-h);
+}
+.appbar-logo{height:46px;width:auto;flex:0 0 auto;filter:drop-shadow(0 6px 14px rgba(38,38,38,.12))}
+.appbar .badr-bar{direction:rtl}
+
+/* ---------- split ---------- */
+.split{
+  flex:1 1 auto;min-height:0;
+  display:flex;direction:ltr;               /* tasks(first)=left · links(second)=right */
+  overflow:hidden;
+  padding:0 clamp(8px,1.6vw,20px) clamp(8px,1.6vw,16px);
+}
+.pane{
+  direction:rtl;min-width:0;min-height:0;
+  overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;
+  scrollbar-width:thin;scrollbar-color:rgba(38,38,38,.16) transparent;
+}
+.pane::-webkit-scrollbar{width:8px}
+.pane::-webkit-scrollbar-thumb{background:rgba(38,38,38,.16);border-radius:99px}
+.pane::-webkit-scrollbar-track{background:transparent}
+.pane-tasks{flex:var(--tp,34) 1 0}
+.pane-links{flex:var(--lp,66) 1 0}
+.pane-inner{padding:16px clamp(8px,1.4vw,18px) 40px}
+
+/* ---------- drag handle between the panes ---------- */
+.divider{
+  flex:0 0 auto;width:16px;align-self:stretch;cursor:col-resize;
+  display:grid;place-items:center;direction:rtl;touch-action:none;
+}
+.divider span{
+  width:4px;height:48px;border-radius:99px;background:var(--line-2);
+  transition:background .25s var(--ease),height .25s var(--ease);
+}
+.divider:hover span,.divider.drag span{background:var(--gold);height:70px}
+.divider:focus-visible{outline:none}
+.divider:focus-visible span{background:var(--gold)}
+body.resizing{cursor:col-resize}
+body.resizing .pane{pointer-events:none;user-select:none}
+body.resizing .maqr-vid{pointer-events:none}
+
+/* the panes shed their old top-margins now that they sit inside scrollers */
+.pane-inner .group:first-child{margin-top:6px}
+.pane-tasks .me-strip{margin-top:2px}
+
+/* ==========================================================================
+   11. TASK VIEW TOGGLE (cards ⇄ horizontal pills)
+   ========================================================================== */
+.view-bar{display:flex;align-items:center;gap:12px;margin:2px 2px 14px}
+.view-lbl{flex:1;min-width:0;font-size:.8rem;font-weight:700;color:var(--muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.view-toggle{flex:0 0 auto;display:inline-flex;gap:3px;background:#f1efe9;border-radius:12px;padding:3px}
+.view-opt{
+  width:38px;height:32px;border:none;border-radius:9px;background:none;cursor:pointer;
+  color:var(--muted);display:grid;place-items:center;padding:0;
+  transition:background .26s var(--ease),color .26s var(--ease);
+}
+.view-opt svg{width:18px;height:18px}
+.view-opt.on{background:#fff;color:var(--ink);box-shadow:var(--shadow-sm)}
+.view-opt:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+
+/* pills layout: one per row, stretched */
+.task-list.as-pills{flex-direction:column;flex-wrap:nowrap;align-items:stretch;justify-content:flex-start;gap:10px}
+
+/* ---------- one pill ---------- */
+.task.pill{
+  width:100%;min-height:0;aspect-ratio:auto;
+  flex-direction:row;align-items:center;gap:12px;
+  padding:11px 14px;border-radius:20px;text-align:start;
+}
+.task.pill .task-emoji{
+  width:52px;height:52px;flex:0 0 auto;margin:0;border-radius:15px;
+  font-size:1.55rem;
+}
+.task.pill .task-img{width:86px;aspect-ratio:2/1;flex:0 0 auto;margin:0;border-radius:12px}
+.pill-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;align-items:flex-start}
+.task.pill .task-title{font-size:.98rem;line-height:1.25}
+.task.pill .task-tags{justify-content:flex-start;gap:4px}
+.pill-quote{
+  font-size:.7rem;font-weight:600;opacity:.82;line-height:1.4;max-width:100%;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.pill-cd{
+  flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:1px;
+  min-width:42px;font-variant-numeric:tabular-nums;
+}
+.pill-cd .n{font-size:1.02rem;font-weight:900;line-height:1}
+.pill-cd .u{font-size:.58rem;font-weight:700;opacity:.82}
+.pill-cd.late{
+  background:rgba(0,0,0,.2);border-radius:11px;padding:5px 8px;min-width:0;
+  font-size:.72rem;font-weight:900;flex-direction:row;
+}
+.pill-check{
+  flex:0 0 auto;width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;padding:0;
+  display:grid;place-items:center;
+  background:#fff;color:color-mix(in srgb,var(--c) 72%,#262626);
+  box-shadow:0 8px 18px -10px rgba(0,0,0,.55);
+  transition:transform .28s var(--ease),filter .28s var(--ease);
+}
+.pill-check svg{width:21px;height:21px}
+.pill-check:hover{transform:translateY(-2px)}
+.pill-check:active{transform:scale(.94)}
+.pill-check:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.pill-check.badge{
+  width:auto;height:44px;padding:0 12px;border-radius:16px;gap:5px;
+  background:rgba(0,0,0,.2);color:var(--fg,#fff);
+  font-family:inherit;font-size:.86rem;font-weight:900;cursor:default;
+}
+.pill-check.badge svg{width:15px;height:15px}
+.pill-check.undo{
+  width:auto;padding:0 14px;border-radius:16px;gap:6px;
+  font-family:inherit;font-size:.85rem;font-weight:900;
+}
+/* points sticker on a pill sits over the media (inline-start = right in RTL) */
+.task.pill .task-pts{width:30px;height:30px;inset-block-start:6px;inset-inline-end:6px}
+/* the leader edit affordance moves out of the corner on pills */
+.task.pill .task-edit{position:static;order:5;width:34px;height:34px;flex:0 0 auto;background:rgba(0,0,0,.16)}
+
+/* ==========================================================================
+   12. SLIM BOTTOM ROW (socials + install) — replaces the footer scene
+   ========================================================================== */
+.mini-foot{
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+  margin-top:28px;padding-top:20px;border-top:1.5px solid var(--line);
+}
+.mini-foot .socials{display:flex;gap:10px}
+.mini-foot .socials a{
+  width:40px;height:40px;border-radius:12px;display:grid;place-items:center;
+  background:#fff;border:1.5px solid var(--line);color:var(--ink);box-shadow:var(--shadow-sm);
+  transition:transform .32s var(--spring),color .3s var(--ease),background .3s var(--ease),border-color .3s var(--ease);
+}
+.mini-foot .socials a svg{width:20px;height:20px}
+.mini-foot .socials a:hover{transform:translateY(-4px)}
+.mini-foot .socials a[data-net=youtube]:hover{background:var(--red);color:#fff;border-color:transparent}
+.mini-foot .socials a[data-net=instagram]:hover{background:var(--gold);color:#1a1408;border-color:transparent}
+.mini-foot .socials a[data-net=tiktok]:hover{background:#111;color:#fff;border-color:transparent}
+.mini-foot .socials a[data-net=behance]:hover{background:var(--blue);color:#fff;border-color:transparent}
+.mini-foot .socials a:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.mini-foot-tag{font-size:.76rem;font-weight:700;color:var(--faint);text-align:center}
+.pwa-btn{
+  display:none;align-items:center;gap:8px;
+  font-family:inherit;font-size:.84rem;font-weight:800;color:var(--ink);cursor:pointer;
+  background:#fff;border:1.5px solid var(--line);padding:9px 18px;border-radius:999px;
+  box-shadow:var(--shadow-sm);
+  transition:transform .3s var(--ease),background .3s var(--ease),color .3s var(--ease),border-color .3s var(--ease);
+}
+.pwa-btn.show{display:inline-flex}
+.pwa-btn svg{width:16px;height:16px}
+.pwa-btn:hover{transform:translateY(-2px);background:var(--gold);color:#fff;border-color:transparent}
+.pwa-btn:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+
+/* ==========================================================================
+   13. MOBILE BOTTOM BAR (liquid glass) + FAVOURITES FAN
+   Hidden on desktop; shown at the mobile breakpoint.
+   ========================================================================== */
+.tabbar{display:none}
+.fav-fan{display:none}
+
+@media(max-width:820px){
+
+  :root{--appbar-h:auto;--tabbar-h:calc(66px + env(safe-area-inset-bottom))}
+
+  /* app bar: logo above the (larger) بدر bar, pinned, unchanging between pages */
+  .appbar{flex-direction:column;gap:9px;padding:12px 18px 10px;text-align:center}
+  .appbar-logo{height:38px}
+  .appbar .badr-bar{width:100%}
+  .badr-line{margin-bottom:8px}
+  .badr-track{height:13px}
+  .badr-paper{width:58px}
+  .badr-left .num{font-size:1.35rem}
+
+  /* split becomes a two-page horizontal pager. The panes are absolutely stacked
+     (so two 100vw pages never widen the document in RTL) and offset by transform
+     — GPU-composited, and it live-follows a swipe. */
+  .divider{display:none}
+  .split{position:relative;display:block;padding:0;overflow:hidden}
+  .pane{
+    position:absolute;inset:0;width:100%;height:100%;flex:none!important;
+    transition:transform .4s var(--ease);backface-visibility:hidden;
+    touch-action:pan-y;    /* vertical scroll stays native; horizontal belongs to the pager JS (no browser hijack) */
+  }
+  .pane-tasks{transform:translateX(0)}
+  .pane-links{transform:translateX(100%)}                 /* waiting off to the right */
+  body[data-page=links] .pane-tasks{transform:translateX(-100%)}
+  body[data-page=links] .pane-links{transform:translateX(0)}
+  .split.dragging .pane{transition:none;will-change:transform}
+  .split.dragging .pane-tasks{transform:translateX(var(--ps,0px))}
+  .split.dragging .pane-links{transform:translateX(calc(var(--ps,0px) + 100%))}
+  .pane-inner{padding:14px 16px calc(var(--tabbar-h) + 22px)}
+
+  /* favourites live in the fan on mobile, not in the links pane */
+  .pane-links .fav{display:none}
+
+  /* ---------- tab bar ---------- */
+  .tabbar{
+    position:fixed;inset-inline:0;bottom:0;z-index:60;
+    display:flex;direction:ltr;align-items:stretch;justify-content:center;gap:12px;
+    padding:0 clamp(14px,4vw,22px) calc(8px + env(safe-area-inset-bottom));
+    padding-top:8px;pointer-events:none;
+    transform:translateZ(0);      /* own layer: keeps the fixed bar painted while the panes slide (iOS) */
+  }
+  .tabbar-glass,.fab-fav{pointer-events:auto}
+  .tabbar-glass{
+    position:relative;flex:1 1 auto;max-width:420px;display:flex;padding:6px;overflow:hidden;
+    border-radius:26px;
+    background:rgba(255,255,255,.5);
+    -webkit-backdrop-filter:blur(24px) saturate(1.7);
+    backdrop-filter:blur(24px) saturate(1.7);
+    border:1px solid rgba(255,255,255,.65);
+    box-shadow:0 12px 34px -12px rgba(38,38,38,.34), inset 0 1px 0 rgba(255,255,255,.75);
+  }
+  .tabbar-glass::before{  /* glossy top highlight — the "liquid" sheen */
+    content:"";position:absolute;inset:0 0 45% 0;border-radius:26px 26px 40% 40%/26px 26px 60% 60%;
+    background:linear-gradient(180deg,rgba(255,255,255,.55),transparent);
+    pointer-events:none;
+  }
+  .tab-ind{
+    position:absolute;top:6px;bottom:6px;left:6px;width:calc(50% - 6px);z-index:0;
+    border-radius:20px;
+    background:linear-gradient(160deg,#fff,rgba(255,255,255,.72));
+    box-shadow:0 6px 16px -8px rgba(38,38,38,.4), inset 0 1px 0 rgba(255,255,255,.9);
+    transition:transform .42s var(--spring);
+  }
+  body[data-page=links] .tab-ind{transform:translateX(100%)}
+  .tab-btn{
+    flex:1;position:relative;z-index:1;
+    display:flex;flex-direction:column;align-items:center;gap:2px;
+    padding:8px 4px;border:none;background:none;cursor:pointer;
+    color:var(--muted);font-family:inherit;font-size:.7rem;font-weight:800;
+    transition:color .3s var(--ease),transform .3s var(--ease);
+  }
+  .tab-btn svg{width:23px;height:23px;transition:transform .3s var(--spring)}
+  .tab-btn.on{color:var(--ink)}
+  .tab-btn.on svg{transform:translateY(-1px) scale(1.05)}
+  .tab-btn:active{transform:scale(.94)}
+
+  /* ---------- مختصر floating star ---------- */
+  .fab-fav{
+    flex:0 0 auto;width:60px;height:60px;border-radius:22px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+    border:1px solid rgba(255,255,255,.55);cursor:pointer;
+    color:#fff;font-family:inherit;font-size:.6rem;font-weight:800;
+    background:linear-gradient(160deg,var(--gold),#e8a81c);
+    box-shadow:0 14px 28px -10px rgba(243,192,43,.95), inset 0 1px 0 rgba(255,255,255,.55);
+    transition:transform .32s var(--spring);
+  }
+  .fab-fav svg{width:22px;height:22px}
+  .fab-fav:active{transform:scale(.92)}
+  .fab-fav.on{transform:scale(1.06) rotate(8deg)}
+
+  /* ---------- fan popup ---------- */
+  .fav-fan{position:fixed;inset:0;z-index:65;display:none;transform:translateZ(0)}
+  .fav-fan.open{display:block}
+  .fav-fan-scrim{
+    position:absolute;inset:0;background:rgba(38,38,38,.3);
+    -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
+    opacity:0;transition:opacity .32s var(--ease);
+  }
+  .fav-fan.open .fav-fan-scrim{opacity:1}
+  .fav-fan-tray{
+    position:absolute;inset-inline:0;bottom:calc(var(--tabbar-h) + 10px);
+    display:flex;justify-content:center;padding:18px clamp(16px,6vw,40px);
+  }
+  .fav-fan-tray .fav-strip{
+    background:none;border:none;box-shadow:none;overflow:visible;padding:0;
+    flex-wrap:wrap;justify-content:center;gap:14px;max-width:440px;
+  }
+  .fav-fan.open .fav-strip>*{animation:fanUp .42s var(--spring) backwards}
+  @keyframes fanUp{from{opacity:0;transform:translateY(38px) scale(.5)}to{opacity:1;transform:none}}
+  .fav-fan-tray .fav-chip,.fav-fan-tray .fav-add{width:58px;height:58px;border-radius:18px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .pane,.tab-ind,.fav-fan-scrim{transition:none!important}
+  .fav-fan.open .fav-strip>*{animation:none!important}
+}
+
+/* ==========================================================================
+   14. COMPACT CARD (cards view) — left-aligned, dense, less empty space
+   ========================================================================== */
+.task:not(.pill){
+  align-items:stretch;text-align:start;
+  min-height:0;padding:14px 14px 13px;gap:11px;
+}
+.task-head{display:flex;align-items:center;gap:11px;width:100%}
+.task-head.img{align-items:flex-start}
+.task-headtxt{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+/* the emoji shrinks from a big centred medallion to a tidy tile */
+.task:not(.pill) .task-emoji{
+  width:46px;height:46px;flex:0 0 auto;margin:0;border-radius:14px;
+  font-size:1.5rem;
+}
+.task:not(.pill) .task-title{font-size:.98rem;line-height:1.28;text-align:start}
+.task:not(.pill) .task-tags{justify-content:flex-start;gap:5px}
+.task:not(.pill) .task-img{margin:0}
+/* due + assignees share one compact line */
+.task-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%}
+.task:not(.pill) .task-due{text-align:start}
+.task:not(.pill) .task-nudge{
+  text-align:start;line-height:1.45;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.task:not(.pill) .cd-wrap{align-items:stretch;margin-top:6px}
+.task:not(.pill) .cd{justify-content:flex-start}
+.task:not(.pill) .cd-pre{text-align:start}
+.task:not(.pill) .cd-unit{flex:1}

@@ -2,10 +2,10 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1" />
 <title>مكتبة المدوّنة</title>
 <meta name="description" content="مكتبة المدوّنة — بوابة واحدة لكل روابط الفريق ومتابعة خطة بدر الكبرى." />
-<meta name="theme-color" content="#f3c02b" />
+<meta name="theme-color" content="#faf9f7" />
 <link rel="icon" type="image/png" href="assets/favicon.png" />
 <link rel="shortcut icon" type="image/png" href="assets/favicon.png" />
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
@@ -16,40 +16,61 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="preload" as="image" href="assets/paper.png" />
+<link rel="preload" as="video" href="assets/maqr/maqr.mp4" type="video/mp4" />
 <link rel="stylesheet" href="schedule.css" />
 <link rel="stylesheet" href="library.css" />
 <style>
   :root{
+    /* light surface system */
     --snow:#faf9f7;
+    --bg:#faf9f7;
+    --surface:#ffffff;
     --ink:#262626;
+    --muted:#8b847b;
+    --faint:#b0a89d;
+    --line:rgba(38,38,38,.10);
+    --line-2:rgba(38,38,38,.16);
+
+    /* brand */
     --red:#e54b2a;
     --gold:#f3c02b;
     --teal:#41b9a6;
     --blue:#0b6eb9;
+    --maqr:#3bb9ab;
 
-    --badr-deep:#8a5a12;
-    --badr-mid:#c98a1c;
-    --badr-glow:#f7d15a;
+    /* tag colours */
+    --tag-content:#f3c02b;  /* محتوى */
+    --tag-prod:#e54b2a;     /* إنتاج */
+    --tag-comm:#41b9a6;     /* تواصل */
+    --tag-coord:#2f8fe0;    /* تنسيق */
 
-    --r-lg:28px;
-    --r-md:20px;
+    --r-lg:26px;
+    --r-md:18px;
     --shadow-sm:0 2px 8px rgba(38,38,38,.06);
     --shadow-md:0 14px 40px -18px rgba(38,38,38,.35);
     --shadow-lg:0 30px 70px -30px rgba(38,38,38,.45);
     --ease:cubic-bezier(.22,.61,.36,1);
+    --spring:cubic-bezier(.34,1.56,.64,1);
+
+    --appbar-h:76px;         /* desktop top bar height */
+    --tabbar-h:0px;          /* mobile bottom bar height (0 on desktop) */
   }
 
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth}
   body{
+    position:relative;
     font-family:'Baloo Bhaijaan 2',system-ui,-apple-system,'Segoe UI',sans-serif;
     color:var(--ink);
     background:
       radial-gradient(1200px 520px at 80% -10%, rgba(243,192,43,.14), transparent 60%),
       radial-gradient(900px 500px at 10% 0%, rgba(65,185,166,.08), transparent 55%),
       var(--snow);
-    min-height:100vh;
-    overflow-x:hidden;
+    height:100vh;
+    height:100svh;                   /* stable: keyboard/toolbar don't resize the shell (kills the onboarding reflow) */
+    overflow:hidden;                 /* app-shell: the panes scroll, not the body */
+    display:flex;flex-direction:column;
     -webkit-font-smoothing:antialiased;
     text-rendering:optimizeLegibility;
   }
@@ -61,350 +82,227 @@
     -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
     -webkit-mask-size:contain;mask-size:contain;
     -webkit-mask-position:center;mask-position:center;
-    opacity:.07;
+    opacity:.06;
     animation:drift linear infinite;
     will-change:transform;
   }
   @keyframes drift{
     0%{transform:translate3d(0,0,0) rotate(0deg)}
-    50%{transform:translate3d(0,-26px,0) rotate(8deg)}
+    50%{transform:translate3d(0,-28px,0) rotate(9deg)}
     100%{transform:translate3d(0,0,0) rotate(0deg)}
   }
 
-  /* ---------- layout ---------- */
-  .wrap{
-    position:relative;z-index:1;
-    max-width:1080px;margin:0 auto;
-    padding:clamp(20px,4vw,44px) clamp(18px,4vw,40px) 40px;
-  }
+  /* ==========================================================
+     BADR — thin progress bar (lives inside the app bar)
+     ========================================================== */
+  .badr-bar{position:relative;z-index:1;flex:1;min-width:0}
+  .badr-line{display:flex;align-items:center;gap:12px;margin-bottom:9px}
+  .badr-brand{display:flex;align-items:center;gap:10px;min-width:0}
+  .badr-brand img{height:28px;width:auto;flex:0 0 auto;filter:drop-shadow(0 4px 10px rgba(243,192,43,.35))}
+  .badr-brand b{font-size:clamp(.95rem,2.4vw,1.12rem);font-weight:900;letter-spacing:-.3px;white-space:nowrap}
+  .badr-spacer{flex:1}
+  .badr-left{display:flex;align-items:baseline;gap:6px;white-space:nowrap}
+  .badr-left .num{font-size:clamp(1.05rem,3vw,1.35rem);font-weight:900;color:var(--gold);font-variant-numeric:tabular-nums;line-height:1}
+  .badr-left .lbl{font-size:.76rem;font-weight:700;color:var(--muted)}
 
-  /* ---------- header ---------- */
-  header.top{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
-  .brand-logo{height:54px;width:auto;filter:drop-shadow(0 6px 14px rgba(38,38,38,.12))}
-  .top h1{font-size:clamp(1.5rem,4.5vw,2.2rem);font-weight:900;letter-spacing:-.5px}
-  .top p{font-size:clamp(.85rem,2.4vw,1rem);color:#7c766e;font-weight:500;max-width:34ch}
-
-  /* ---------- badr progress card ---------- */
-  .badr{
-    margin-top:clamp(20px,3.5vw,32px);
-    position:relative;overflow:hidden;
-    border-radius:var(--r-lg);
-    color:#fff;
-    box-shadow:var(--shadow-lg);
-    isolation:isolate;
+  .badr-track{
+    position:relative;height:9px;border-radius:999px;
+    background:rgba(38,38,38,.09);
+    box-shadow:inset 0 1px 2px rgba(38,38,38,.12);
+    overflow:visible;
   }
-  .badr::before{
-    content:"";position:absolute;inset:0;z-index:-2;
-    background:url('assets/badr-bg.png') center/cover no-repeat;
-    transform:scale(1.06);
-  }
-  .badr::after{
-    content:"";position:absolute;inset:0;z-index:-1;
-    background:
-      linear-gradient(105deg, rgba(138,90,18,.94) 0%, rgba(201,138,28,.86) 42%, rgba(243,192,43,.55) 100%),
-      radial-gradient(700px 300px at 88% 20%, rgba(255,232,150,.5), transparent 60%);
-  }
-  .badr-inner{
-    display:flex;align-items:center;gap:clamp(16px,3vw,34px);
-    padding:clamp(20px,3.2vw,30px) clamp(20px,3.6vw,38px);
-    flex-wrap:wrap;
-  }
-  .sun-slot{
-    flex:0 0 auto;width:clamp(96px,14vw,132px);
-    display:grid;place-items:center;overflow:visible;
-  }
-  .sun{
-    width:200%;height:auto;
-    filter:drop-shadow(0 10px 26px rgba(0,0,0,.28));
-    animation:sunPulse 6s var(--ease) infinite;
-  }
-  @keyframes sunPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
-
-  .badr-body{flex:1 1 auto;min-width:0}
-  .badr-kicker{
-    display:inline-flex;align-items:center;gap:8px;
-    font-size:.8rem;font-weight:700;letter-spacing:.5px;
-    background:rgba(255,255,255,.22);backdrop-filter:blur(6px);
-    padding:5px 12px;border-radius:999px;margin-bottom:12px;
-  }
-  .badr-kicker .dot{width:7px;height:7px;border-radius:50%;background:var(--badr-glow);box-shadow:0 0 0 4px rgba(247,209,90,.35)}
-  .badr-topline{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-  .badr-topline .badr-kicker{margin-bottom:0}
-  .pct-badge{
-    display:inline-flex;align-items:baseline;gap:2px;
-    font-size:.9rem;font-weight:700;color:var(--badr-deep);
-    background:var(--badr-glow);padding:5px 13px;border-radius:999px;
-    box-shadow:0 6px 16px -6px rgba(247,209,90,.9);
-  }
-  .pct-badge b{font-size:1.15rem;font-weight:800;line-height:1}
-  .badr-headline{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:4px}
-  .badr-headline .num{font-size:clamp(2rem,7vw,3.1rem);font-weight:900;line-height:1;text-shadow:0 4px 18px rgba(0,0,0,.25)}
-  .badr-headline .lbl{font-size:clamp(1rem,2.6vw,1.2rem);font-weight:700;opacity:.95}
-  .badr-sub{font-size:.9rem;font-weight:500;opacity:.9;margin-bottom:14px}
-
-  .track{
-    position:relative;height:14px;border-radius:999px;
-    background:rgba(0,0,0,.22);overflow:hidden;
-    box-shadow:inset 0 1px 3px rgba(0,0,0,.3);
-  }
-  .fill{
+  .badr-fill{
     position:absolute;inset-block:0;inset-inline-start:0;width:0;
-    border-radius:999px;overflow:hidden;
-    background:linear-gradient(270deg,var(--gold),#f6cf6b,var(--red));
-    box-shadow:0 0 10px rgba(247,209,90,.35);
-    transition:width 1.6s var(--ease);
+    border-radius:999px;
+    background:linear-gradient(270deg,var(--gold),#f6cf6b 40%,var(--red));
+    box-shadow:0 0 14px rgba(243,192,43,.45);
+    transition:width 1.7s var(--ease);
   }
-  .fill::after{
-    content:"";position:absolute;inset:0;
-    background:linear-gradient(270deg,transparent 25%,rgba(255,255,255,.22) 50%,transparent 75%);
-    filter:blur(3px);
-    transform:translateX(120%);
-    animation:sheen 4.2s ease-in-out infinite;
+  .badr-fill::after{
+    content:"";position:absolute;inset:0;border-radius:999px;
+    background:linear-gradient(270deg,transparent 20%,rgba(255,255,255,.28) 50%,transparent 80%);
+    filter:blur(2px);transform:translateX(120%);
+    animation:sheen 4.4s ease-in-out infinite;
   }
   @keyframes sheen{0%{transform:translateX(120%)}100%{transform:translateX(-120%)}}
-  .meta{display:flex;justify-content:space-between;margin-top:10px;font-size:.82rem;font-weight:600;opacity:.92}
-  .meta .end{color:var(--badr-glow)}
-
-  /* ---------- sections ---------- */
-  .section-head{display:flex;align-items:center;gap:14px;margin:clamp(30px,4.5vw,46px) 2px 18px}
-  .section-head h2{font-size:clamp(1.15rem,3.2vw,1.5rem);font-weight:900;white-space:nowrap}
-  .section-head .tag{font-size:.78rem;font-weight:700;color:#9a938a}
-  .section-head .rule{flex:1;height:2px;border-radius:2px;background:linear-gradient(90deg,rgba(38,38,38,.14),transparent)}
-
-  .grid{display:grid;gap:clamp(14px,2vw,20px)}
-  /* three across — the hidden مسودة card doesn't take a slot, so the row stays full */
-  .grid.main{grid-template-columns:repeat(3,1fr)}
-  .grid.coord{grid-template-columns:repeat(3,1fr);margin-top:4px}
-
-  /* ---------- big buttons ---------- */
-  .btn{
-    position:relative;display:flex;flex-direction:column;justify-content:flex-end;
-    gap:6px;min-height:176px;
-    padding:24px;border-radius:var(--r-md);
-    text-decoration:none;color:#fff;overflow:hidden;isolation:isolate;
-    box-shadow:var(--shadow-md);
-    transition:transform .4s var(--ease),box-shadow .4s var(--ease);
-    background:var(--c);
+  .badr-paper{
+    position:absolute;inset-block-start:50%;
+    inset-inline-start:0;width:52px;height:auto;
+    transform:translate(50%,-50%);
+    transition:inset-inline-start 1.7s var(--ease);
+    pointer-events:none;
   }
-  .btn::before{
+
+  /* ==========================================================
+     MAQR — مقر العمل card
+     ========================================================== */
+  .maqr-card{
+    position:relative;display:block;overflow:hidden;isolation:isolate;
+    border-radius:var(--r-lg);
+    min-height:clamp(180px,26vw,230px);
+    text-decoration:none;color:#fff;cursor:pointer;
+    border:1.5px solid rgba(59,185,171,.28);
+    box-shadow:var(--shadow-md), 0 0 0 1px rgba(0,0,0,.4);
+    transition:transform .45s var(--ease),box-shadow .45s var(--ease),border-color .45s var(--ease);
+  }
+  .maqr-card:hover{transform:translateY(-5px);box-shadow:var(--shadow-lg);border-color:rgba(59,185,171,.55)}
+  .maqr-card:focus-visible{outline:3px solid var(--maqr);outline-offset:3px}
+  .maqr-vid{
+    position:absolute;inset:0;width:100%;height:100%;
+    object-fit:cover;z-index:-3;
+    transition:opacity 1.1s linear;
+  }
+  .maqr-card::after{
     content:"";position:absolute;inset:0;z-index:-1;
-    background:linear-gradient(135deg,rgba(255,255,255,.16),transparent 55%);
+    background:
+      linear-gradient(100deg, rgba(10,26,24,.78) 0%, rgba(12,30,28,.42) 46%, rgba(59,185,171,.18) 100%),
+      radial-gradient(120% 120% at 12% 120%, rgba(0,0,0,.55), transparent 55%);
   }
-  .btn .glyph{
-    position:absolute;inset-block-start:-18px;inset-inline-start:-14px;
-    width:118px;height:118px;opacity:.16;transform:rotate(-8deg);
-    background:#fff;
-    -webkit-mask:var(--g) no-repeat center/contain;mask:var(--g) no-repeat center/contain;
-    transition:transform .5s var(--ease),opacity .5s var(--ease);
+  .maqr-logo{
+    position:absolute;inset-block-start:clamp(16px,3vw,22px);inset-inline-end:clamp(16px,3vw,22px);
+    height:clamp(38px,6vw,50px);width:auto;z-index:2;
+    filter:brightness(0) invert(1) drop-shadow(0 6px 16px rgba(0,0,0,.6));
   }
-  .btn .row{display:flex;align-items:center;gap:10px}
-  .btn .chip{
-    width:34px;height:34px;flex:0 0 auto;border-radius:11px;
-    background:rgba(255,255,255,.2);display:grid;place-items:center;
+  .maqr-body{
+    position:relative;z-index:2;
+    display:flex;flex-direction:column;justify-content:flex-end;
+    height:100%;min-height:inherit;
+    padding:clamp(20px,3.4vw,28px);
+    gap:6px;
   }
-  .btn .chip i{
-    width:20px;height:20px;background:#fff;display:block;
-    -webkit-mask:var(--g) no-repeat center/contain;mask:var(--g) no-repeat center/contain;
+  .maqr-kicker{
+    display:inline-flex;align-items:center;gap:7px;align-self:flex-start;
+    font-size:.72rem;font-weight:800;letter-spacing:.4px;color:#cdfbf3;
+    background:rgba(59,185,171,.2);border:1px solid rgba(59,185,171,.35);
+    padding:5px 12px;border-radius:999px;margin-bottom:6px;backdrop-filter:blur(6px);
   }
-  .btn .name{font-size:clamp(1.05rem,2.6vw,1.35rem);font-weight:800;line-height:1.25}
-  .btn .go{font-size:.82rem;font-weight:600;opacity:.9;display:flex;align-items:center;gap:6px}
-  .btn .go svg{width:15px;height:15px;transition:transform .4s var(--ease)}
-  .btn:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg)}
-  .btn:hover .glyph{transform:rotate(2deg) scale(1.06);opacity:.24}
-  .btn:hover .go svg{transform:translateX(-5px)}
-  .btn:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+  .maqr-kicker .dot{width:7px;height:7px;border-radius:50%;background:var(--maqr);box-shadow:0 0 0 4px rgba(59,185,171,.3)}
+  .maqr-title{font-size:clamp(1.5rem,4vw,2.1rem);font-weight:900;line-height:1.05;text-shadow:0 4px 20px rgba(0,0,0,.5)}
+  .maqr-sub{font-size:.9rem;font-weight:600;color:rgba(255,255,255,.82);max-width:40ch;margin-bottom:14px}
+  .maqr-enter{
+    align-self:flex-start;
+    display:inline-flex;align-items:center;gap:10px;
+    font-size:.96rem;font-weight:900;color:#0c1a18;
+    background:var(--maqr);
+    padding:11px 20px;border-radius:999px;
+    box-shadow:0 14px 30px -12px rgba(59,185,171,.9);
+    transition:transform .35s var(--spring),box-shadow .35s var(--ease),gap .35s var(--ease);
+  }
+  .maqr-enter svg{width:18px;height:18px}
+  .maqr-card:hover .maqr-enter{transform:translateY(-2px);gap:14px;box-shadow:0 18px 36px -12px rgba(59,185,171,1)}
+  .maqr-card:hover .maqr-enter svg{animation:arrowNudge 1s var(--ease) infinite}
+  @keyframes arrowNudge{0%,100%{transform:translateX(0)}50%{transform:translateX(-5px)}}
 
-  /* ---------- coordination buttons ---------- */
-  .cbtn{
-    position:relative;display:flex;align-items:center;gap:14px;
-    min-height:88px;padding:18px 22px;border-radius:var(--r-md);
-    text-decoration:none;color:var(--ink);overflow:hidden;
-    background:#fff;border:1.5px solid rgba(38,38,38,.1);
-    box-shadow:var(--shadow-sm);
-    transition:transform .4s var(--ease),box-shadow .4s var(--ease),border-color .4s var(--ease);
+  /* ==========================================================
+     LOADER — paper flies in, then out; curtain lifts
+     ========================================================== */
+  .loader-screen{position:fixed;inset:0;z-index:120;display:grid;place-items:center;overflow:hidden}
+  .loader-curtain{
+    position:absolute;inset:0;z-index:1;
+    background:
+      radial-gradient(1000px 620px at 50% 42%, #fffdf6, var(--snow) 68%),
+      radial-gradient(700px 420px at 82% 8%, rgba(243,192,43,.18), transparent 60%),
+      radial-gradient(600px 420px at 12% 96%, rgba(65,185,166,.14), transparent 60%);
+    transition:transform 1s var(--ease);will-change:transform;
   }
-  .cbtn .chip{
-    width:44px;height:44px;flex:0 0 auto;border-radius:13px;display:grid;place-items:center;
-    background:linear-gradient(135deg,var(--c),color-mix(in srgb,var(--c) 65%,#fff));
+  .loader-paper{
+    position:relative;z-index:2;width:min(220px,52vw);height:auto;
+    filter:drop-shadow(0 26px 44px rgba(138,90,18,.28));
+    transform:translateX(125vw) rotate(22deg);will-change:transform;
   }
-  .cbtn .chip i{width:24px;height:24px;background:#fff;display:block;-webkit-mask:var(--g) no-repeat center/contain;mask:var(--g) no-repeat center/contain}
-  .cbtn .txt{flex:1;min-width:0}
-  .cbtn .name{display:block;font-size:clamp(1rem,2.6vw,1.2rem);font-weight:800}
-  .cbtn .desc{display:block;font-size:.82rem;font-weight:500;color:#8b847b;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .cbtn .arrow{width:18px;height:18px;opacity:.4;transition:transform .4s var(--ease)}
-  .cbtn:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);border-color:transparent}
-  .cbtn:hover .arrow{transform:translateX(-5px)}
-  .cbtn:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+  .loader-screen.in .loader-paper{animation:paperIn .95s var(--spring) forwards}
+  @keyframes paperIn{
+    0%{transform:translateX(125vw) rotate(22deg)}
+    70%{transform:translateX(-14px) rotate(-5deg)}
+    100%{transform:translateX(0) rotate(0deg)}
+  }
+  .loader-screen.out .loader-paper{animation:paperOut .8s var(--ease) forwards}
+  @keyframes paperOut{
+    0%{transform:translateX(0) rotate(0)}
+    22%{transform:translateX(46px) rotate(7deg)}
+    100%{transform:translateX(-130vw) rotate(-24deg)}
+  }
+  .loader-screen.out .loader-curtain{transform:translateY(-100%)}
+  .loader-screen.gone{display:none}
+  .loader-dots{
+    position:absolute;z-index:2;inset-block-end:16%;inset-inline:0;
+    display:flex;gap:8px;justify-content:center;opacity:0;
+    animation:fadeUp .6s var(--ease) .5s forwards;
+  }
+  .loader-screen.out .loader-dots{opacity:0;transition:opacity .3s}
+  .loader-dots span{width:9px;height:9px;border-radius:50%;background:var(--gold);animation:dotPulse 1.1s ease-in-out infinite}
+  .loader-dots span:nth-child(2){background:var(--red);animation-delay:.16s}
+  .loader-dots span:nth-child(3){background:var(--teal);animation-delay:.32s}
+  @keyframes dotPulse{0%,100%{transform:scale(.6);opacity:.4}50%{transform:scale(1);opacity:1}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:.9;transform:none}}
 
-  .cbtn.wip{cursor:not-allowed;background:repeating-linear-gradient(135deg,#fff,#fff 12px,#faf7f0 12px,#faf7f0 24px)}
-  .cbtn.wip .chip{background:linear-gradient(135deg,#cfc7bb,#e4ded4)}
-  .cbtn.wip .name,.cbtn.wip .desc{color:#a49c90}
-  .cbtn.wip:hover{transform:none;box-shadow:var(--shadow-sm);border-color:rgba(38,38,38,.1)}
-  .badge{
-    font-size:.7rem;font-weight:800;color:#fff;background:var(--gold);
-    padding:4px 10px;border-radius:999px;white-space:nowrap;
-    box-shadow:0 4px 12px -4px rgba(243,192,43,.8);
+  /* ==========================================================
+     CURTAIN — page-exit transition (maqr card / claim now)
+     ========================================================== */
+  .curtain{
+    position:fixed;inset:0;z-index:110;pointer-events:none;transform:translateY(-100%);
+    background:
+      radial-gradient(900px 560px at 50% 40%, #fffdf6, var(--snow) 70%),
+      linear-gradient(180deg, rgba(243,192,43,.16), rgba(59,185,171,.12));
+    display:grid;place-items:center;
   }
-  /* جديد tag on the gold مسودة button — white pill so it reads on yellow */
-  .btn .name .badge{
-    display:inline-block;vertical-align:middle;margin-inline-start:6px;
-    font-size:.6rem;padding:3px 9px;color:var(--badr-deep);background:#fff;
-    box-shadow:0 4px 12px -4px rgba(0,0,0,.25);
-    animation:badgePop 2.6s var(--ease) infinite;
-  }
-  @keyframes badgePop{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+  .curtain img{width:min(180px,44vw);height:auto;opacity:0;filter:drop-shadow(0 20px 40px rgba(138,90,18,.28))}
+  .curtain.down{transform:translateY(0);transition:transform .6s var(--ease);pointer-events:all}
+  .curtain.down img{opacity:1;transition:opacity .4s var(--ease) .18s;animation:bob 2.6s var(--ease) infinite .5s}
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-10px) rotate(2deg)}}
 
-  /* ---------- paper ---------- */
-  .paper-wrap{margin-top:clamp(30px,5vw,54px);text-align:center;line-height:0}
-  .paper{width:min(340px,72vw);height:auto;filter:drop-shadow(0 18px 26px rgba(138,90,18,.18));animation:bob 5s var(--ease) infinite}
-  @keyframes bob{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-12px) rotate(1deg)}}
-
-  /* ---------- footer ---------- */
-  footer{margin-top:clamp(6px,1.5vw,14px);text-align:center;display:flex;flex-direction:column;align-items:center;gap:18px}
-
-  .pwa-btn{
-    display:none;align-items:center;gap:9px;
-    font-family:inherit;font-size:.92rem;font-weight:700;color:var(--ink);cursor:pointer;
-    background:#fff;border:1.5px solid rgba(38,38,38,.1);
-    padding:11px 20px;border-radius:999px;box-shadow:var(--shadow-sm);
-    transition:transform .35s var(--ease),box-shadow .35s var(--ease),background .35s var(--ease),color .35s var(--ease);
-  }
-  .pwa-btn.show{display:inline-flex}
-  .pwa-btn svg{width:18px;height:18px}
-  .pwa-btn:hover{transform:translateY(-3px);background:var(--gold);color:#fff;border-color:transparent;box-shadow:var(--shadow-md)}
-  .pwa-btn:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
-  .socials{display:flex;gap:14px}
-  .socials a{
-    width:46px;height:46px;border-radius:14px;display:grid;place-items:center;
-    background:#fff;border:1.5px solid rgba(38,38,38,.08);box-shadow:var(--shadow-sm);
-    color:var(--ink);transition:transform .35s var(--ease),color .35s var(--ease),background .35s var(--ease);
-  }
-  .socials a svg{width:22px;height:22px}
-  .socials a:hover{transform:translateY(-4px)}
-  .socials a[data-net=youtube]:hover{background:var(--red);color:#fff}
-  .socials a[data-net=instagram]:hover{background:var(--gold);color:#fff}
-  .socials a[data-net=tiktok]:hover{background:var(--ink);color:#fff}
-  .socials a[data-net=behance]:hover{background:var(--blue);color:#fff}
-  .foot-line{font-size:.82rem;color:#9a938a;font-weight:500}
-
-  /* ---------- entrance sequence ---------- */
-  .reveal{opacity:0;transform:translateY(22px);animation:rise .7s var(--ease) forwards;animation-delay:var(--d,0s)}
+  /* ---------- entrance reveal ---------- */
+  .reveal{opacity:0;transform:translateY(20px);animation:rise .7s var(--ease) forwards;animation-delay:var(--d,0s)}
   @keyframes rise{to{opacity:1;transform:translateY(0)}}
 
-  /* ---------- responsive ---------- */
-  @media(max-width:820px){
-    .grid.main{grid-template-columns:1fr 1fr}
-    .grid.coord{grid-template-columns:1fr}
-  }
-  @media(max-width:560px){
-    .grid.main{grid-template-columns:1fr}
-    .grid.coord{grid-template-columns:1fr}
-    .brand-logo{height:46px}
-    .badr{margin-top:18px}
-    .section-head{margin:26px 2px 16px}
-
-    /* compact badr card ~ button height */
-    .badr-inner{flex-wrap:nowrap;gap:12px;padding:14px 16px}
-    .sun-slot{width:58px}
-    .badr-kicker{display:none}
-    .badr-sub{display:none}
-    .meta{display:none}
-    .badr-topline{margin-bottom:7px;justify-content:flex-start}
-    .badr-headline{margin-bottom:9px;align-items:baseline;gap:7px}
-    .badr-headline .num{font-size:1.9rem}
-    .badr-headline .lbl{font-size:.8rem;line-height:1.25}
-    .pct-badge{font-size:.78rem;padding:4px 11px}
-    .pct-badge b{font-size:1rem}
-    .track{height:9px}
-
-    /* keep buttons bold, well-proportioned */
-    .btn{min-height:134px}
-    .btn.b3{min-height:134px}
-  }
-
   @media(prefers-reduced-motion:reduce){
-    .deco,.sun,.fill,.fill::after,.reveal,.paper{animation:none!important}
+    .deco,.badr-fill,.badr-fill::after,.reveal,.loader-paper,.maqr-vid{animation:none!important}
     .reveal{opacity:1;transform:none}
-    .fill{transition:none}
+    .badr-fill,.badr-paper{transition:none}
   }
 </style>
 </head>
-<body class="locked">
+<body class="locked" data-page="tasks">
+
+<!-- ==================== LOADER ==================== -->
+<div class="loader-screen" id="loader" aria-hidden="true">
+  <div class="loader-curtain"></div>
+  <img class="loader-paper" src="assets/paper.png" alt="" />
+  <div class="loader-dots"><span></span><span></span><span></span></div>
+</div>
+
+<!-- ==================== PAGE-EXIT CURTAIN ==================== -->
+<div class="curtain" id="curtain" aria-hidden="true"><img src="assets/paper.png" alt="" /></div>
 
 <div class="bg-deco" aria-hidden="true" id="deco"></div>
 
-<div class="wrap">
-
-  <header class="top reveal" style="--d:.05s">
-    <img class="brand-logo" src="assets/brand-logo.svg" alt="شعار المدوّنة" />
-    <h1>مكتبة المدوّنة</h1>
-    <p>بوّابة واحدة تجمع كل مساحاتك وروابطك — ومعها نبض خطة بدر الكبرى.</p>
-  </header>
-
-  <!-- ===== تنبيه: الإشعارات معطّلة ===== -->
-  <div class="nag" id="notifNag" hidden role="status">
-    <span class="nag-ico">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/><path d="M3 3l18 18"/></svg>
-    </span>
-    <span class="nag-txt">
-      <b>التنبيهات معطّلة</b>
-      <span>لن تصلك تذكيرات المهام الجديدة ولا تنبيه اقتراب الموعد.</span>
-    </span>
-    <button class="nag-btn" id="notifNagBtn" type="button">تفعيل التنبيهات</button>
-  </div>
-
-  <!-- ===== المفضلة (collapsible, sits above بدر) ===== -->
-  <section class="group fav reveal" id="favGroup" data-group="fav" style="--d:.10s" aria-label="المفضلة">
-    <button class="group-head" type="button" aria-expanded="true">
-      <span class="tri">
-        <svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M6 8.6 1.2 3.4A.7.7 0 0 1 1.7 2.2h8.6a.7.7 0 0 1 .5 1.2z"/></svg>
+<!-- ==================== TOP APP BAR (logo + بدر) ==================== -->
+<header class="appbar reveal" style="--d:.02s">
+  <img class="appbar-logo" src="assets/brand-logo.svg" alt="شعار المدوّنة" />
+  <section class="badr-bar" aria-label="تقدّم خطة بدر الكبرى">
+    <div class="badr-line">
+      <span class="badr-brand">
+        <img src="assets/badr-logo.png" alt="" />
+        <b>خطة بدر الكبرى</b>
       </span>
-      <h2>المفضلة</h2>
-      <span class="count" id="favCount"></span>
-      <span class="tag">اختصاراتك السريعة</span>
-      <span class="rule"></span>
-    </button>
-    <div class="group-body"><div class="group-inner">
-      <div class="fav-strip" id="favStrip"></div>
-    </div></div>
-  </section>
-
-  <!-- ===== بدر الكبرى progress ===== -->
-  <section class="badr reveal" style="--d:.18s" aria-label="تقدّم خطة بدر الكبرى">
-    <div class="badr-inner">
-      <span class="sun-slot"><img class="sun" src="assets/badr-logo.png" alt="بدر الكبرى — يوم الفرقان" /></span>
-      <div class="badr-body">
-        <div class="badr-topline">
-          <span class="badr-kicker"><span class="dot"></span> خطة المحتوى · بدر الكبرى</span>
-          <span class="pct-badge"><b id="pctBadge">—</b>٪ مكتمل</span>
-        </div>
-        <div class="badr-headline">
-          <span class="num" id="daysLeft">—</span>
-          <span class="lbl">يومًا تبقّى على بدر الكبرى</span>
-        </div>
-        <p class="badr-sub">من يوليو ٢٠٢٥ حتى ٣١ أكتوبر ٢٠٢٦ — <span id="pct">—</span>٪ من الخطة أُنجز.</p>
-        <div class="track"><div class="fill" id="fill"></div></div>
-        <div class="meta">
-          <span>البداية · يوليو 2025</span>
-          <span class="end">النهاية · 31 أكتوبر 2026</span>
-        </div>
-      </div>
+      <span class="badr-spacer"></span>
+      <span class="badr-left"><span class="num" id="daysLeft">—</span><span class="lbl">يومًا تبقّى</span></span>
+    </div>
+    <div class="badr-track">
+      <div class="badr-fill" id="fill"></div>
+      <img class="badr-paper" id="badrPaper" src="assets/paper.png" alt="" />
     </div>
   </section>
+</header>
 
-  <!-- ===== مهامي / لوحة القائد ===== -->
-  <section class="group tasks reveal" id="tasksGroup" data-group="tasks" style="--d:.24s" aria-label="المهام">
-    <button class="group-head" type="button" aria-expanded="true">
-      <span class="tri">
-        <svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M6 8.6 1.2 3.4A.7.7 0 0 1 1.7 2.2h8.6a.7.7 0 0 1 .5 1.2z"/></svg>
-      </span>
-      <h2>مهامي</h2>
-      <span class="tag" id="tasksTag">عدّاد تنازلي لكل مهمة</span>
-      <span class="rule"></span>
-    </button>
-    <div class="group-body"><div class="group-inner">
+<!-- ==================== SPLIT: tasks (left) | links (right) ==================== -->
+<main class="split" id="split">
 
-      <div class="me-strip">
+  <!-- ===== LEFT PANE — المهام ===== -->
+  <section class="pane pane-tasks" id="paneTasks" aria-label="المهام">
+    <div class="pane-inner">
+
+      <div class="me-strip reveal" style="--d:.1s">
         <img id="meAvatar" src="" alt="" />
         <span class="me-txt">
           <span class="me-name" id="meName">—</span>
@@ -416,158 +314,216 @@
         <span class="me-actions">
           <button class="mini-btn gold" id="addTaskBtn" type="button" hidden>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-            إضافة مهمة
+            <span class="lbl">إضافة مهمة</span>
           </button>
-          <button class="mini-btn" id="archBtn" type="button">
+          <button class="mini-btn icon" id="archBtn" type="button" title="الأرشيف" aria-label="الأرشيف">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h18v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M2 4h20v4H2z"/><path d="M10 12h4"/></svg>
-            الأرشيف<span id="archCount"></span>
+            <span id="archCount"></span>
           </button>
-          <button class="mini-btn" id="logoutBtn" type="button" title="تسجيل الخروج" aria-label="تسجيل الخروج">
+          <button class="mini-btn icon" id="logoutBtn" type="button" title="تسجيل الخروج" aria-label="تسجيل الخروج">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
           </button>
         </span>
+      </div>
+
+      <!-- ===== تنبيه: الإشعارات معطّلة ===== -->
+      <div class="nag" id="notifNag" hidden role="status">
+        <span class="nag-ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/><path d="M3 3l18 18"/></svg>
+        </span>
+        <span class="nag-txt">
+          <b>التنبيهات معطّلة</b>
+          <span>لن تصلك تذكيرات المهام الجديدة ولا تنبيه اقتراب الموعد.</span>
+        </span>
+        <button class="nag-btn" id="notifNagBtn" type="button">تفعيل التنبيهات</button>
+      </div>
+
+      <!-- appearance toggle: cards vs horizontal pills -->
+      <div class="view-bar reveal" style="--d:.14s">
+        <span class="view-lbl" id="tasksTag">عدّاد تنازلي لكل مهمة</span>
+        <div class="view-toggle" role="group" aria-label="طريقة عرض المهام">
+          <button class="view-opt on" id="viewCards" type="button" aria-label="عرض بطاقات" aria-pressed="true">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>
+          </button>
+          <button class="view-opt" id="viewPills" type="button" aria-label="عرض قوائم" aria-pressed="false">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="3" y="4.5" width="18" height="4" rx="2"/><rect x="3" y="10" width="18" height="4" rx="2"/><rect x="3" y="15.5" width="18" height="4" rx="2"/></svg>
+          </button>
+        </div>
       </div>
 
       <div class="loader" id="taskLoader" hidden></div>
       <p class="loader-lbl" id="taskLoaderLbl" hidden>جارٍ تحميل مهامك…</p>
       <div id="taskList"></div>
 
-    </div></div>
-  </section>
-
-  <!-- ===== للمبدع / المكتبة ===== -->
-  <section class="group reveal" data-group="library" style="--d:.30s">
-    <button class="group-head" type="button" aria-expanded="true">
-      <span class="tri">
-        <svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M6 8.6 1.2 3.4A.7.7 0 0 1 1.7 2.2h8.6a.7.7 0 0 1 .5 1.2z"/></svg>
-      </span>
-      <h2>المكتبة</h2>
-      <span class="tag">للمبدع · الأساسي للجميع</span>
-      <span class="rule"></span>
-    </button>
-    <div class="group-body"><div class="group-inner">
-
-  <nav class="grid main" aria-label="روابط المبدع">
-    <a class="btn b1 reveal" id="workspaceLink" data-card="workspace" style="--c:var(--red);--g:url('assets/icons/smile.png');--d:.38s" href="https://youssefdot.github.io/MaqrMdwnh/">
-      <span class="glyph"></span>
-      <span class="row"><span class="chip"><i></i></span></span>
-      <span class="name">مساحة العمل</span>
-      <span class="go">ادخل المساحة <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></span>
-    </a>
-
-    <a class="btn b-moswada reveal" data-card="moswada" style="display:none;--c:var(--gold);--g:url('assets/icons/swash.png');--d:.42s" href="Moswada/">
-      <span class="glyph"></span>
-      <span class="row"><span class="chip"><i></i></span></span>
-      <span class="name">مسودة العمل <span class="badge new">جديد</span></span>
-      <span class="go">افتح المسودة <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></span>
-    </a>
-
-    <a class="btn b2 reveal" data-card="points" style="--c:var(--teal);--g:url('assets/icons/sparkles.png');--d:.46s" href="https://youssefdot.github.io/MdwnhPoints/">
-      <span class="glyph"></span>
-      <span class="row"><span class="chip"><i></i></span></span>
-      <span class="name">النقاط وصحبة الفجر</span>
-      <span class="go">تابع نقاطك <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></span>
-    </a>
-
-    <a class="btn b3 reveal" data-card="guides" style="--c:var(--blue);--g:url('assets/icons/spiral.png');--d:.54s" href="https://m5zan.carrd.co">
-      <span class="glyph"></span>
-      <span class="row"><span class="chip"><i></i></span></span>
-      <span class="name">الأدلة والروابط</span>
-      <span class="go">ملف الهوية · دليل العمل <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></span>
-    </a>
-  </nav>
-
-    </div></div>
-  </section>
-
-  <!-- ===== فريق التنسيق ===== -->
-  <section class="group reveal" data-group="coord" style="--d:.62s">
-    <button class="group-head" type="button" aria-expanded="true">
-      <span class="tri">
-        <svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M6 8.6 1.2 3.4A.7.7 0 0 1 1.7 2.2h8.6a.7.7 0 0 1 .5 1.2z"/></svg>
-      </span>
-      <h2>فريق التنسيق</h2>
-      <span class="tag">وصول خاص</span>
-      <span class="rule"></span>
-    </button>
-    <div class="group-body"><div class="group-inner">
-
-  <nav class="grid coord" aria-label="روابط فريق التنسيق">
-    <a class="cbtn reveal" data-card="press" style="--c:var(--blue);--g:url('assets/icons/swash.png');--d:.70s" href="https://youssefdot.github.io/MdwnhNewsDesigner/">
-      <span class="chip"><i></i></span>
-      <span class="txt">
-        <span class="name">استوديو الصحافة</span>
-        <span class="desc">تصميم وإخراج الأخبار</span>
-      </span>
-      <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-    </a>
-
-    <button class="cbtn reveal" id="openSchedule" data-card="schedule" type="button" style="--c:var(--red);--g:url('assets/icons/sparkles.png');--d:.74s">
-      <span class="chip"><i></i></span>
-      <span class="txt">
-        <span class="name">جدول النشر <span class="badge new">جديد</span></span>
-        <span class="desc">تقويم المحتوى الشهري للفريق</span>
-      </span>
-      <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-    </button>
-
-    <a class="cbtn reveal" data-card="analytics" style="--c:var(--gold);--g:url('assets/icons/hash.png');--d:.78s" href="https://mdwn.studio/analytics/">
-      <span class="chip"><i></i></span>
-      <span class="txt">
-        <span class="name">صفحة الإحصائيات</span>
-        <span class="desc">أرقام الأداء والنشر لحظة بلحظة</span>
-      </span>
-      <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-    </a>
-
-    <a class="cbtn reveal" data-card="tools" style="--c:var(--teal);--g:url('assets/icons/asterisk.png');--d:.86s" href="https://mdwntnseq.carrd.co">
-      <span class="chip"><i></i></span>
-      <span class="txt">
-        <span class="name">أدوات التنسيق</span>
-        <span class="desc">روابط وأدوات فريق التنسيق</span>
-      </span>
-      <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-    </a>
-  </nav>
-
-    </div></div>
-  </section>
-
-  <!-- ===== paper ===== -->
-  <div class="paper-wrap reveal" style="--d:.84s" aria-hidden="true">
-    <img class="paper" src="assets/paper.png" alt="" loading="lazy" />
-  </div>
-
-  <!-- ===== footer ===== -->
-  <footer class="reveal" style="--d:.92s">
-    <button class="pwa-btn" id="pwaBtn" type="button">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M5 21h14"/></svg>
-      ثبّت التطبيق على جهازك
-    </button>
-    <div class="socials" aria-label="حسابات التواصل">
-      <a data-net="youtube" href="https://www.youtube.com/@Mdwn.c" target="_blank" rel="noopener" aria-label="يوتيوب">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8ZM9.6 15.6V8.4l6.2 3.6-6.2 3.6Z"/></svg>
-      </a>
-      <a data-net="instagram" href="https://www.instagram.com/mdwn.c/" target="_blank" rel="noopener" aria-label="إنستغرام">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r="1.2" fill="currentColor" stroke="none"/></svg>
-      </a>
-      <a data-net="tiktok" href="https://www.tiktok.com/@mdwn.c" target="_blank" rel="noopener" aria-label="تيك توك">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 3c.3 2.1 1.5 3.6 3.6 3.9V10c-1.4 0-2.7-.4-3.9-1.1v6.6c0 3.4-2.8 6.1-6.2 5.5-2.6-.5-4.4-2.9-4.2-5.5.2-2.7 2.6-4.8 5.3-4.6v3.2c-.5-.2-1.1-.2-1.6 0-1 .3-1.6 1.3-1.4 2.3.2 1 1.2 1.7 2.2 1.5 1-.1 1.8-1 1.8-2V3h3Z"/></svg>
-      </a>
-      <a data-net="behance" href="https://www.behance.net/gallery/236817445/_" target="_blank" rel="noopener" aria-label="بيهانس">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8.3 11.4c.9-.4 1.4-1.1 1.4-2.2 0-2-1.5-2.7-3.3-2.7H1v11h5.6c1.9 0 3.7-.9 3.7-3.1 0-1.4-.6-2.4-2-2.9ZM3.5 8.4h2.2c.8 0 1.5.2 1.5 1.2 0 .9-.6 1.2-1.4 1.2H3.5V8.4Zm2.5 6.9H3.5v-2.6h2.6c1 0 1.6.4 1.6 1.3 0 1-.7 1.3-1.7 1.3ZM23 12.6c0-2.4-1.4-4.4-3.9-4.4-2.5 0-4.1 1.9-4.1 4.3 0 2.5 1.6 4.3 4.1 4.3 1.9 0 3.2-.9 3.7-2.7h-2c-.2.6-.9.9-1.6.9-1.1 0-1.7-.6-1.8-1.7H23c0-.3 0-.6 0-.7Zm-5.6-.8c.1-1 .7-1.6 1.7-1.6s1.5.6 1.6 1.6h-3.3ZM15.6 7.2h4.9v1.2h-4.9V7.2Z"/></svg>
-      </a>
     </div>
-    <p class="foot-line">مكتبة المدوّنة · خطة بدر الكبرى ٢٠٢٥–٢٠٢٦</p>
-  </footer>
+  </section>
 
+  <!-- ===== DRAG HANDLE ===== -->
+  <div class="divider" id="divider" role="separator" aria-label="تغيير حجم الجانبين" tabindex="0"><span></span></div>
+
+  <!-- ===== RIGHT PANE — الروابط ===== -->
+  <section class="pane pane-links" id="paneLinks" aria-label="الروابط">
+    <div class="pane-inner">
+
+      <!-- ===== المفضلة (desktop; on mobile it lives in the fan) ===== -->
+      <section class="group fav reveal" id="favGroup" data-group="fav" style="--d:.12s" aria-label="المفضلة">
+        <button class="group-head" type="button" aria-expanded="true">
+          <span class="tri">
+            <svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M6 8.6 1.2 3.4A.7.7 0 0 1 1.7 2.2h8.6a.7.7 0 0 1 .5 1.2z"/></svg>
+          </span>
+          <h2>المفضلة</h2>
+          <span class="count" id="favCount"></span>
+          <span class="tag">اختصاراتك السريعة</span>
+          <span class="rule"></span>
+        </button>
+        <div class="group-body"><div class="group-inner">
+          <div class="fav-strip" id="favStrip"></div>
+        </div></div>
+      </section>
+
+      <!-- ===== مقر العمل ===== -->
+      <section class="group reveal" data-group="maqr" style="--d:.18s" aria-label="مقر العمل">
+        <button class="group-head" type="button" aria-expanded="true">
+          <span class="tri">
+            <svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M6 8.6 1.2 3.4A.7.7 0 0 1 1.7 2.2h8.6a.7.7 0 0 1 .5 1.2z"/></svg>
+          </span>
+          <h2>مقر العمل</h2>
+          <span class="tag">مساحتك الحيّة للعمل</span>
+          <span class="rule"></span>
+        </button>
+        <div class="group-body"><div class="group-inner">
+          <a class="maqr-card" id="maqrCard" data-card="maqr" href="https://youssefdot.github.io/MaqrMdwnh/" aria-label="الدخول لمقر العمل">
+            <video class="maqr-vid" id="maqrVidA" muted playsinline preload="auto" poster="assets/maqr/maqr.jpg">
+              <source src="assets/maqr/maqr.webm" type="video/webm" />
+              <source src="assets/maqr/maqr.mp4" type="video/mp4" />
+            </video>
+            <video class="maqr-vid" id="maqrVidB" muted playsinline preload="auto" style="opacity:0">
+              <source src="assets/maqr/maqr.webm" type="video/webm" />
+              <source src="assets/maqr/maqr.mp4" type="video/mp4" />
+            </video>
+            <img class="maqr-logo" src="assets/maqr-logo.png" alt="" />
+            <div class="maqr-body">
+              <span class="maqr-kicker"><span class="dot"></span> مساحة العمل</span>
+              <span class="maqr-title">مقر العمل</span>
+              <span class="maqr-sub">مساحة العمل التفاعلية — أدخل وأبدأ!</span>
+              <span class="maqr-enter">الدخول للمقر
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+              </span>
+            </div>
+          </a>
+        </div></div>
+      </section>
+
+      <!-- ===== الروابط (المكتبة + التنسيق) ===== -->
+      <section class="group reveal" data-group="links" style="--d:.24s" aria-label="الروابط">
+        <button class="group-head" type="button" aria-expanded="true">
+          <span class="tri">
+            <svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M6 8.6 1.2 3.4A.7.7 0 0 1 1.7 2.2h8.6a.7.7 0 0 1 .5 1.2z"/></svg>
+          </span>
+          <h2>الروابط</h2>
+          <span class="tag">كل مساحات الفريق</span>
+          <span class="rule"></span>
+        </button>
+        <div class="group-body"><div class="group-inner">
+
+          <nav class="link-list" aria-label="روابط أساسية">
+            <a class="lrow reveal" data-card="points" data-icon="leaderboard" style="--c:var(--teal);--d:.30s" href="https://youssefdot.github.io/MdwnhPoints/">
+              <span class="chip"></span>
+              <span class="txt"><span class="name">النقاط وصحبة الفجر</span><span class="desc">تابع نقاطك وترتيبك في الفريق</span></span>
+              <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+            </a>
+            <a class="lrow reveal" data-card="guides" data-icon="box" style="--c:var(--blue);--d:.34s" href="https://m5zan.carrd.co">
+              <span class="chip"></span>
+              <span class="txt"><span class="name">الأدلة والروابط</span><span class="desc">ملف الهوية · دليل العمل</span></span>
+              <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+            </a>
+          </nav>
+
+          <div class="link-sep"><span>فريق التنسيق</span></div>
+
+          <nav class="link-list" aria-label="روابط فريق التنسيق">
+            <a class="lrow reveal" data-card="press" data-icon="news" style="--c:var(--blue);--d:.38s" href="https://youssefdot.github.io/MdwnhNewsDesigner/">
+              <span class="chip"></span>
+              <span class="txt"><span class="name">استوديو الصحافة</span><span class="desc">تصميم وإخراج الأخبار</span></span>
+              <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+            </a>
+            <button class="lrow reveal" id="openSchedule" data-card="schedule" data-icon="calendar" type="button" style="--c:var(--red);--d:.42s">
+              <span class="chip"></span>
+              <span class="txt"><span class="name">جدول النشر</span><span class="desc">تقويم المحتوى الشهري للفريق</span></span>
+              <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+            </button>
+            <a class="lrow reveal" data-card="analytics" data-icon="chart" style="--c:var(--gold);--d:.46s" href="https://mdwn.studio/analytics/">
+              <span class="chip"></span>
+              <span class="txt"><span class="name">صفحة الإحصائيات</span><span class="desc">أرقام الأداء والنشر لحظة بلحظة</span></span>
+              <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+            </a>
+            <a class="lrow reveal" data-card="tools" data-icon="tools" style="--c:var(--teal);--d:.50s" href="https://mdwntnseq.carrd.co">
+              <span class="chip"></span>
+              <span class="txt"><span class="name">أدوات التنسيق</span><span class="desc">روابط وأدوات فريق التنسيق</span></span>
+              <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+            </a>
+          </nav>
+
+          <!-- slim, background-free bottom row (socials + install) -->
+          <div class="mini-foot">
+            <div class="socials" aria-label="حسابات التواصل">
+              <a data-net="youtube" href="https://www.youtube.com/@Mdwn.c" target="_blank" rel="noopener" aria-label="يوتيوب">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8ZM9.6 15.6V8.4l6.2 3.6-6.2 3.6Z"/></svg>
+              </a>
+              <a data-net="instagram" href="https://www.instagram.com/mdwn.c/" target="_blank" rel="noopener" aria-label="إنستغرام">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r="1.2" fill="currentColor" stroke="none"/></svg>
+              </a>
+              <a data-net="tiktok" href="https://www.tiktok.com/@mdwn.c" target="_blank" rel="noopener" aria-label="تيك توك">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 3c.3 2.1 1.5 3.6 3.6 3.9V10c-1.4 0-2.7-.4-3.9-1.1v6.6c0 3.4-2.8 6.1-6.2 5.5-2.6-.5-4.4-2.9-4.2-5.5.2-2.7 2.6-4.8 5.3-4.6v3.2c-.5-.2-1.1-.2-1.6 0-1 .3-1.6 1.3-1.4 2.3.2 1 1.2 1.7 2.2 1.5 1-.1 1.8-1 1.8-2V3h3Z"/></svg>
+              </a>
+              <a data-net="behance" href="https://www.behance.net/gallery/236817445/_" target="_blank" rel="noopener" aria-label="بيهانس">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8.3 11.4c.9-.4 1.4-1.1 1.4-2.2 0-2-1.5-2.7-3.3-2.7H1v11h5.6c1.9 0 3.7-.9 3.7-3.1 0-1.4-.6-2.4-2-2.9ZM3.5 8.4h2.2c.8 0 1.5.2 1.5 1.2 0 .9-.6 1.2-1.4 1.2H3.5V8.4Zm2.5 6.9H3.5v-2.6h2.6c1 0 1.6.4 1.6 1.3 0 1-.7 1.3-1.7 1.3ZM23 12.6c0-2.4-1.4-4.4-3.9-4.4-2.5 0-4.1 1.9-4.1 4.3 0 2.5 1.6 4.3 4.1 4.3 1.9 0 3.2-.9 3.7-2.7h-2c-.2.6-.9.9-1.6.9-1.1 0-1.7-.6-1.8-1.7H23c0-.3 0-.6 0-.7Zm-5.6-.8c.1-1 .7-1.6 1.7-1.6s1.5.6 1.6 1.6h-3.3ZM15.6 7.2h4.9v1.2h-4.9V7.2Z"/></svg>
+              </a>
+            </div>
+            <button class="pwa-btn" id="pwaBtn" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M5 21h14"/></svg>
+              ثبّت التطبيق
+            </button>
+            <p class="mini-foot-tag">مكتبة المدوّنة · خطة بدر الكبرى ٢٠٢٥–٢٠٢٦</p>
+          </div>
+
+        </div></div>
+      </section>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- ==================== MOBILE BOTTOM BAR (liquid glass) ==================== -->
+<nav class="tabbar" id="tabbar" aria-label="التنقّل">
+  <div class="tabbar-glass">
+    <span class="tab-ind" id="tabInd" aria-hidden="true"></span>
+    <button class="tab-btn on" id="tabTasks" type="button" aria-label="المهام" aria-pressed="true">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 2h6a2 2 0 0 1 2 2h1a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h1a2 2 0 0 1 2-2Zm0 3v1h6V5H9Zm-1.3 7.3 1.8 1.8 4-4a1 1 0 1 0-1.4-1.4l-2.6 2.6-.8-.8a1 1 0 1 0-1.4 1.4Z"/></svg>
+      <span>المهام</span>
+    </button>
+    <button class="tab-btn" id="tabLinks" type="button" aria-label="الروابط" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10.6 13.4a4 4 0 0 0 5.7.2l3-3a4 4 0 1 0-5.7-5.7L11 6.5a1.4 1.4 0 0 0 2 2l1.6-1.6a1.1 1.1 0 0 1 1.6 1.6l-3 3a1.1 1.1 0 0 1-1.6 0 1.4 1.4 0 0 0-2 1.9Z"/><path d="M13.4 10.6a4 4 0 0 0-5.7-.2l-3 3a4 4 0 1 0 5.7 5.7L13 17.5a1.4 1.4 0 0 0-2-2l-1.6 1.6a1.1 1.1 0 0 1-1.6-1.6l3-3a1.1 1.1 0 0 1 1.6 0 1.4 1.4 0 0 0 2-1.9Z"/></svg>
+      <span>الروابط</span>
+    </button>
+  </div>
+  <button class="fab-fav" id="fabFav" type="button" aria-label="مختصر — المفضلة" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.4 6.2 20.5l1.1-6.5L2.6 9.4l6.5-.9z"/></svg>
+    <span>مختصر</span>
+  </button>
+</nav>
+
+<!-- ==================== MOBILE FAVOURITES FAN ==================== -->
+<div class="fav-fan" id="favFan" aria-hidden="true">
+  <div class="fav-fan-scrim" id="favFanScrim"></div>
+  <div class="fav-fan-tray" id="favFanTray"><!-- #favStrip is moved here while open --></div>
 </div>
 
 <!-- ==================== LOGIN GATE ==================== -->
 <div class="gate" id="gate" role="dialog" aria-modal="true" aria-label="تسجيل الدخول">
   <div class="gate-card">
 
-    <!-- step 0: shown until we know whether this device is already signed in -->
     <div class="gate-step" data-step="0">
       <img class="gate-logo" src="assets/brand-logo.svg" alt="شعار المدوّنة" />
       <h2>مكتبة المدوّنة</h2>
@@ -575,7 +531,6 @@
       <div class="loader" style="margin-top:20px"></div>
     </div>
 
-    <!-- step 1: email -->
     <div class="gate-step" data-step="1" hidden>
       <img class="gate-logo" src="assets/brand-logo.svg" alt="شعار المدوّنة" />
       <h2>أهلًا بك في المكتبة</h2>
@@ -588,7 +543,6 @@
       <p class="gate-msg" id="gateMsg" role="status" aria-live="polite"></p>
     </div>
 
-    <!-- step 2: notifications -->
     <div class="gate-step" data-step="2" hidden>
       <div class="gate-hello">
         <img id="helloAvatar" src="" alt="" />
@@ -602,7 +556,6 @@
       <button class="gate-btn" id="allowBtn" type="button">السماح بالتنبيهات</button>
     </div>
 
-    <!-- step 3: blocked -->
     <div class="gate-step" data-step="3" hidden>
       <div class="bell">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/><path d="M3 3l18 18"/></svg>
@@ -619,7 +572,6 @@
       <button class="gate-btn ghost" id="deniedSkip" type="button">المتابعة بدون تنبيهات</button>
     </div>
 
-    <!-- step 4: platform can't do web push at all (iOS Safari outside the PWA) -->
     <div class="gate-step" data-step="4" hidden>
       <div class="bell">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M5 21h14"/></svg>
@@ -651,11 +603,11 @@
   </div>
 </div>
 
-<!-- ==================== ADD TASK (admin) ==================== -->
+<!-- ==================== ADD / EDIT TASK (admin) ==================== -->
 <div class="modal" id="addModal" hidden role="dialog" aria-modal="true" aria-label="إضافة مهمة">
   <div class="sheet">
     <div class="sheet-head">
-      <h3>إضافة مهمة</h3>
+      <h3 id="addModalTitle">إضافة مهمة</h3>
       <button class="x-btn" type="button" data-close="addModal" aria-label="إغلاق">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg>
       </button>
@@ -668,22 +620,55 @@
       </div>
 
       <div class="f-row">
+        <label>الوسوم — <span class="hint">يمكن اختيار أكثر من واحد</span></label>
+        <div class="tag-picker" id="tagPicker"></div>
+      </div>
+
+      <div class="f-row">
+        <label>النقاط — <span class="hint">تُمنح عند إتمام المهمة</span></label>
+        <div class="pts-picker" id="ptsPicker"></div>
+      </div>
+
+      <div class="f-row">
         <label>لون المهمة</label>
         <div class="swatches" id="swatches"></div>
       </div>
 
       <div class="f-row">
-        <label for="emojiCustom">الرمز التعبيري</label>
-        <div class="emojis" id="emojis"></div>
-        <div class="emoji-any">
-          <input id="emojiCustom" type="text" maxlength="8" inputmode="text"
-                 placeholder="🙂" aria-label="رمز تعبيري مخصّص" />
-          <span>أو اكتب/الصق أي رمز تريده</span>
+        <label>رمز المهمة</label>
+        <div class="media-tabs">
+          <button class="media-tab on" type="button" data-mtab="emoji">رمز تعبيري</button>
+          <button class="media-tab" type="button" data-mtab="image">صورة</button>
+        </div>
+
+        <div class="media-pane" id="emojiPane">
+          <div class="emojis" id="emojis"></div>
+          <div class="emoji-any">
+            <input id="emojiCustom" type="text" maxlength="8" inputmode="text"
+                   placeholder="🙂" aria-label="رمز تعبيري مخصّص" />
+            <span>أو اكتب/الصق أي رمز تريده</span>
+          </div>
+        </div>
+
+        <div class="media-pane" id="imagePane" hidden>
+          <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="أضف صورة">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M8 8l4-4 4 4"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+            <b>اسحب صورة هنا</b>
+            <span>أو اضغط للاختيار — ستُقصّ بنسبة ٢:١</span>
+            <input id="imageInput" type="file" accept="image/*" hidden />
+          </div>
+          <div class="img-preview-row" id="imgPreviewRow" hidden>
+            <img class="img-preview" id="imgPreview" alt="" />
+            <span class="img-preview-actions">
+              <button class="mini-btn" id="imgEditBtn" type="button">تعديل الصورة</button>
+              <button class="mini-btn" id="imgRemoveBtn" type="button">إزالة</button>
+            </span>
+          </div>
         </div>
       </div>
 
       <div class="f-row">
-        <label>الموعد النهائي — <span id="dueLabel" style="font-weight:700;color:#8b847b">لم يُحدَّد بعد</span></label>
+        <label>الموعد النهائي — <span id="dueLabel" class="hint">لم يُحدَّد بعد</span></label>
         <div class="cal">
           <div class="cal-head">
             <button class="cal-nav" id="calPrev" type="button" aria-label="الشهر السابق">
@@ -709,61 +694,135 @@
       </div>
 
     </div>
-    <div class="sheet-foot">
+    <div class="sheet-foot edit-actions">
       <button class="wide-btn" id="saveTask" type="button" disabled>إضافة المهمة</button>
+      <button class="wide-btn danger" id="deleteTaskBtn" type="button" hidden>حذف المهمة</button>
     </div>
+  </div>
+</div>
+
+<!-- ==================== CROP TASK IMAGE (popup) ==================== -->
+<div class="modal" id="cropModal" hidden role="dialog" aria-modal="true" aria-label="ضبط الصورة">
+  <div class="sheet narrow">
+    <div class="sheet-head">
+      <h3>ضبط الصورة</h3>
+      <button class="x-btn" type="button" id="cropCancel" aria-label="إغلاق">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body">
+      <div class="cropper" id="cropper">
+        <div class="crop-stage" id="cropStage">
+          <img id="cropImg" alt="" draggable="false" />
+        </div>
+        <div class="crop-ctl">
+          <label for="cropZoom">تكبير</label>
+          <input id="cropZoom" type="range" min="1" max="3" step="0.01" value="1" />
+          <button class="mini-btn" id="cropReset" type="button">توسيط</button>
+        </div>
+      </div>
+    </div>
+    <div class="sheet-foot">
+      <button class="wide-btn" id="cropSave" type="button">حفظ الصورة</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== ADD QUICKLINK (favourite) ==================== -->
+<div class="modal" id="quickModal" hidden role="dialog" aria-modal="true" aria-label="إضافة اختصار">
+  <div class="sheet narrow">
+    <div class="sheet-head">
+      <h3>إضافة اختصار</h3>
+      <button class="x-btn" type="button" data-close="quickModal" aria-label="إغلاق">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body">
+      <div class="f-row">
+        <div class="ql-preview-row">
+          <button class="fav-chip" id="qlPreview" type="button" tabindex="-1" aria-hidden="true"></button>
+          <span class="ql-preview-lbl">هكذا سيظهر اختصارك في المفضلة</span>
+        </div>
+      </div>
+      <div class="f-row">
+        <label>الأيقونة</label>
+        <div class="ql-icons" id="qlIcons"></div>
+        <div class="emoji-any">
+          <input id="qlEmoji" type="text" maxlength="8" inputmode="text" placeholder="🔗" aria-label="رمز تعبيري" />
+          <span>أو استخدم رمزًا تعبيريًا</span>
+        </div>
+      </div>
+      <div class="f-row">
+        <label>اللون</label>
+        <div class="swatches" id="qlSwatches"></div>
+      </div>
+      <div class="f-row">
+        <label for="qlName">الاسم</label>
+        <input id="qlName" type="text" placeholder="مثال: لوحة التحكم" />
+      </div>
+      <div class="f-row">
+        <label for="qlUrl">الرابط</label>
+        <input id="qlUrl" type="text" inputmode="url" spellcheck="false" placeholder="https://…" style="direction:ltr;text-align:left" />
+      </div>
+    </div>
+    <div class="sheet-foot">
+      <button class="wide-btn" id="saveQuick" type="button" disabled>حفظ الاختصار</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== CLAIM POPUP ==================== -->
+<div class="modal claim-modal" id="claimModal" hidden role="dialog" aria-modal="true" aria-label="استلام النقاط">
+  <div class="claim-card" style="--c:#3bb9ab">
+    <span class="claim-burst"></span>
+    <img class="claim-avatar" id="claimAvatar" src="" alt="" />
+    <h3 class="claim-name" id="claimName">أحسنت!</h3>
+    <p class="claim-task">أتممت «<span id="claimTaskTitle"></span>»</p>
+    <img class="claim-sticker" id="claimSticker" src="" alt="" />
+    <p class="claim-amount">بانتظارك <b id="claimPts">+٠</b> نقطة</p>
+    <button class="wide-btn" id="claimNow" type="button">استلم الآن</button>
+    <button class="claim-later" id="claimLater" type="button">لاحقًا</button>
   </div>
 </div>
 
 <script>
 (function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+
   /* ----- badr progress ----- */
-  var start = new Date(2025,6,1);      // 1 يوليو 2025
-  var end   = new Date(2026,9,31,23,59,59); // 31 أكتوبر 2026
+  var start = new Date(2025,6,1);
+  var end   = new Date(2026,9,31,23,59,59);
   var now   = new Date();
   var total = end - start;
   var passed = Math.min(Math.max(now - start,0), total);
   var pct = Math.round(passed/total*100);
   var daysLeft = Math.max(Math.ceil((end - now)/86400000),0);
 
-  var pctEl = document.getElementById('pct');
-  var pctBadge = document.getElementById('pctBadge');
   var daysEl = document.getElementById('daysLeft');
   var fill = document.getElementById('fill');
-  var ar = function(n){ return n.toLocaleString('ar-EG'); };
-  pctEl.textContent = ar(pct);
+  var paper = document.getElementById('badrPaper');
+  var ar = function(n){ return Number(n||0).toLocaleString('ar-EG'); };
 
-  var reduce = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  function setPaper(p){ if(paper) paper.style.insetInlineStart = p + '%'; }
+
+  daysEl.textContent = ar(daysLeft);
   if(reduce){
-    daysEl.textContent = ar(daysLeft);
-    pctBadge.textContent = ar(pct);
     fill.style.width = pct + '%';
+    setPaper(pct);
   }else{
-    /* count-up days + percent */
-    var dur=1200, t0=null;
-    function step(ts){
-      if(!t0) t0=ts;
-      var p=Math.min((ts-t0)/dur,1);
-      var eased=1-Math.pow(1-p,3);
-      daysEl.textContent = ar(Math.round(daysLeft*eased));
-      pctBadge.textContent = ar(Math.round(pct*eased));
-      if(p<1) requestAnimationFrame(step);
-      else { daysEl.textContent = ar(daysLeft); pctBadge.textContent = ar(pct); }
-    }
-    requestAnimationFrame(step);
-    setTimeout(function(){ fill.style.width = pct + '%'; }, 500);
+    setTimeout(function(){ fill.style.width = pct + '%'; setPaper(pct); }, 400);
   }
 
   /* ----- floating brand icons ----- */
   var icons=['spiral','asterisk','sparkles','question','swash','hash','smile'];
   var colors=['var(--red)','var(--gold)','var(--teal)','var(--blue)'];
   var spots=[
-    {t:'6%',l:'4%',s:120},{t:'12%',l:'86%',s:150},{t:'40%',l:'92%',s:96},
-    {t:'58%',l:'3%',s:130},{t:'78%',l:'80%',s:110},{t:'88%',l:'18%',s:100},
-    {t:'30%',l:'48%',s:80}
+    {t:'5%',l:'4%',s:120},{t:'11%',l:'87%',s:150},{t:'34%',l:'93%',s:96},
+    {t:'54%',l:'2%',s:130},{t:'72%',l:'82%',s:110},{t:'86%',l:'16%',s:100},
+    {t:'26%',l:'50%',s:80}
   ];
   var deco=document.getElementById('deco');
-  if(!reduce){
+  if(!reduce && deco){
     spots.forEach(function(sp,i){
       var d=document.createElement('span');
       d.className='deco';
@@ -779,15 +838,79 @@
     });
   }
 
-  /* ----- hidden moswada access via shift-click ----- */
-  var workspaceLink = document.getElementById('workspaceLink');
-  if(workspaceLink){
-    workspaceLink.addEventListener('click', function(e){
-      if(e.shiftKey){
-        e.preventDefault();
-        window.location.href = 'Moswada/';
-      }
+  /* ----- maqr video: seamless cross-fade loop between two elements ----- */
+  (function(){
+    var a=document.getElementById('maqrVidA'), b=document.getElementById('maqrVidB');
+    if(!a||!b) return;
+    var FADE=0.9;
+    var cur=a, nxt=b;
+    function arm(v){
+      v.addEventListener('timeupdate', function h(){
+        if(!v.duration) return;
+        if(v.currentTime >= v.duration - FADE){
+          v.removeEventListener('timeupdate', h);
+          swap();
+        }
+      });
+    }
+    function swap(){
+      var out=cur, incoming=nxt;
+      try{ incoming.currentTime=0; }catch(e){}
+      var pr=incoming.play(); if(pr&&pr.catch) pr.catch(function(){});
+      incoming.style.opacity='1';
+      out.style.opacity='0';
+      cur=incoming; nxt=out;
+      arm(cur);
+    }
+    function boot(){
+      if(reduce){ a.pause(); return; }
+      a.style.opacity='1';
+      var pr=a.play(); if(pr&&pr.catch) pr.catch(function(){});
+      arm(a);
+    }
+    if(a.readyState>=2) boot(); else a.addEventListener('loadeddata', boot, {once:true});
+    document.addEventListener('visibilitychange', function(){
+      if(document.hidden){ a.pause(); b.pause(); }
+      else if(!reduce){ var pr=cur.play(); if(pr&&pr.catch) pr.catch(function(){}); }
     });
+  })();
+
+  /* ----- maqr card click → drop curtain then navigate ----- */
+  var maqrCard=document.getElementById('maqrCard');
+  var curtain=document.getElementById('curtain');
+  window.__dropCurtain = function(href){
+    if(!curtain){ window.location.href=href; return; }
+    curtain.classList.add('down');
+    setTimeout(function(){ window.location.href=href; }, 650);
+  };
+  window.addEventListener('pageshow', function(e){
+    if(e.persisted && curtain) curtain.classList.remove('down');
+  });
+  if(maqrCard){
+    maqrCard.addEventListener('click', function(e){
+      e.preventDefault();
+      var href = e.shiftKey ? 'Moswada/' : maqrCard.getAttribute('href');
+      window.__dropCurtain(href);
+    });
+  }
+
+  /* ----- loader: fly paper in, then out + lift curtain ----- */
+  var loader=document.getElementById('loader');
+  if(loader){
+    loader.classList.add('in');
+    var minShown = reduce ? 200 : 1150;
+    var t0=Date.now(), done=false;
+    function lift(){
+      if(done) return; done=true;
+      var wait=Math.max(0, minShown-(Date.now()-t0));
+      setTimeout(function(){
+        loader.classList.add('out');
+        setTimeout(function(){ loader.classList.add('gone'); }, reduce?60:1050);
+      }, wait);
+    }
+    if(document.readyState==='complete') lift();
+    else window.addEventListener('load', lift);
+    setTimeout(lift, 4000);
   }
 
   /* ----- service worker ----- */
@@ -798,29 +921,19 @@
   }
 
   /* ----- PWA install ----- */
-  var pwaBtn = document.getElementById('pwaBtn');
-  var deferredPrompt = null;
-  var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-
+  var pwaBtn=document.getElementById('pwaBtn');
+  var deferredPrompt=null;
+  var standalone=window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;
   window.addEventListener('beforeinstallprompt', function(e){
-    e.preventDefault();
-    deferredPrompt = e;
-    if(!standalone) pwaBtn.classList.add('show');
+    e.preventDefault(); deferredPrompt=e;
+    if(!standalone && pwaBtn) pwaBtn.classList.add('show');
   });
-
-  pwaBtn.addEventListener('click', function(){
+  if(pwaBtn) pwaBtn.addEventListener('click', function(){
     if(!deferredPrompt) return;
     deferredPrompt.prompt();
-    deferredPrompt.userChoice.finally(function(){
-      deferredPrompt = null;
-      pwaBtn.classList.remove('show');
-    });
+    deferredPrompt.userChoice.finally(function(){ deferredPrompt=null; pwaBtn.classList.remove('show'); });
   });
-
-  window.addEventListener('appinstalled', function(){
-    pwaBtn.classList.remove('show');
-    deferredPrompt = null;
-  });
+  window.addEventListener('appinstalled', function(){ if(pwaBtn) pwaBtn.classList.remove('show'); deferredPrompt=null; });
 })();
 </script>
 <script src="schedule.js" defer></script>
