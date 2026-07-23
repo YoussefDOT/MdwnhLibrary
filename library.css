@@ -18,12 +18,16 @@ body.locked{overflow:hidden}
 body.locked .appbar,
 body.locked .split,
 body.locked .tabbar{filter:blur(9px) saturate(.7);pointer-events:none;user-select:none}
+/* the floating glyphs animate full-screen behind two stacked backdrop-filters
+   during onboarding — that combo shudders on phones. Park them while locked. */
+body.locked .bg-deco{display:none}
 
 /* ==========================================================================
    1. LOGIN OVERLAY
    ========================================================================== */
 .gate{
-  position:fixed;inset:0;z-index:80;
+  position:fixed;inset-block-start:0;inset-inline:0;z-index:80;
+  height:100svh;overflow-y:auto;      /* svh (not inset:0) so the mobile URL-bar/keyboard can't resize the gate → no onboarding jitter */
   display:grid;place-items:center;
   padding:24px;
   background:
@@ -1227,23 +1231,23 @@ body.resizing .maqr-vid{pointer-events:none}
   .badr-paper{width:58px}
   .badr-left .num{font-size:1.35rem}
 
-  /* split becomes a two-page horizontal pager. The panes are absolutely stacked
-     (so two 100vw pages never widen the document in RTL) and offset by transform
-     — GPU-composited, and it live-follows a swipe. */
+  /* two-page pager = a native horizontal scroll-snap track. The BROWSER owns the
+     swipe (buttery on real touch); no custom touch JS, no per-pane transform sync
+     that glitches mid-slide on iOS. Each pane keeps its own vertical scroll. */
   .divider{display:none}
-  .split{position:relative;display:block;padding:0;overflow:hidden}
-  .pane{
-    position:absolute;inset:0;width:100%;height:100%;flex:none!important;
-    transition:transform .4s var(--ease);backface-visibility:hidden;
-    touch-action:pan-y;    /* vertical scroll stays native; horizontal belongs to the pager JS (no browser hijack) */
+  .split{
+    display:flex;flex-direction:row;padding:0;
+    overflow-x:auto;overflow-y:hidden;
+    scroll-snap-type:x mandatory;scroll-behavior:smooth;
+    overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
   }
-  .pane-tasks{transform:translateX(0)}
-  .pane-links{transform:translateX(100%)}                 /* waiting off to the right */
-  body[data-page=links] .pane-tasks{transform:translateX(-100%)}
-  body[data-page=links] .pane-links{transform:translateX(0)}
-  .split.dragging .pane{transition:none;will-change:transform}
-  .split.dragging .pane-tasks{transform:translateX(var(--ps,0px))}
-  .split.dragging .pane-links{transform:translateX(calc(var(--ps,0px) + 100%))}
+  .split::-webkit-scrollbar{display:none}
+  .pane{
+    flex:0 0 100%;width:100%;height:100%;
+    scroll-snap-align:start;scroll-snap-stop:always;
+    backface-visibility:hidden;
+  }
   .pane-inner{padding:14px 16px calc(var(--tabbar-h) + 22px)}
 
   /* favourites live in the fan on mobile, not in the links pane */
@@ -1330,6 +1334,7 @@ body.resizing .maqr-vid{pointer-events:none}
 
 @media(prefers-reduced-motion:reduce){
   .pane,.tab-ind,.fav-fan-scrim{transition:none!important}
+  .split{scroll-behavior:auto}
   .fav-fan.open .fav-strip>*{animation:none!important}
 }
 

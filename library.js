@@ -1783,8 +1783,8 @@
     });
   }
 
-  /* ---- mobile page switching (both panes shift by one page-width) ---- */
-  function markPage(p) {
+  /* ---- mobile page switching (the split is a native scroll-snap track) ---- */
+  function markPage(p) {                                 // sync only the tab bar / indicator
     document.body.setAttribute('data-page', p);
     var tt = $('#tabTasks'), tl = $('#tabLinks');
     if (tt) { tt.classList.toggle('on', p === 'tasks'); tt.setAttribute('aria-pressed', String(p === 'tasks')); }
@@ -1793,53 +1793,41 @@
   function setPage(p) {
     if (p !== 'tasks' && p !== 'links') return;
     markPage(p);
+    var split = $('#split');
+    if (split && isMobile()) {
+      var left = p === 'links' ? split.clientWidth : 0;
+      // `scroll-snap-type:mandatory` fights an in-flight smooth scroll and can
+      // stall the track half-way between pages (the "empty half" glitch). Relax
+      // snap for the button animation, then restore it so finger-swipes still
+      // snap crisply.
+      split.style.scrollSnapType = 'none';
+      split.scrollTo({ left: left, behavior: 'smooth' });
+      clearTimeout(setPage._snap);
+      setPage._snap = setTimeout(function () {
+        split.style.scrollSnapType = '';
+        split.scrollLeft = left;            // guarantee we land exactly on the page
+      }, 480);
+    }
     closeFan();
   }
 
-  /* ---- swipe between the two pages, live-following the finger ---- */
-  function initSwipe() {
+  /* Follow the native swipe: keep the tab bar in step with the scroll position,
+     and drop the favourites fan once we've settled back on المهام. */
+  function initPager() {
     var split = $('#split'); if (!split) return;
-    var x0 = 0, y0 = 0, dx = 0, tracking = false, decided = false, horiz = false;
-    var W = function () { return split.clientWidth || window.innerWidth || 1; };
-    function settle() {                                 // drop any live-drag visual state
-      split.classList.remove('dragging');
-      split.style.removeProperty('--ps');
-    }
-    split.addEventListener('touchstart', function (e) {
-      // a second finger mid-swipe (or a non-mobile layout) must abandon the drag
-      // cleanly, never freeze the panes half-slid
-      if (!isMobile() || e.touches.length !== 1) { tracking = false; settle(); return; }
-      x0 = e.touches[0].clientX; y0 = e.touches[0].clientY;
-      dx = 0; tracking = true; decided = false; horiz = false;
+    var raf = 0;
+    split.addEventListener('scroll', function () {
+      if (raf) return;
+      raf = requestAnimationFrame(function () {
+        raf = 0;
+        if (!isMobile()) return;
+        var p = split.scrollLeft > split.clientWidth * 0.5 ? 'links' : 'tasks';
+        if (p !== document.body.getAttribute('data-page')) {
+          markPage(p);
+          if (p === 'tasks') closeFan();
+        }
+      });
     }, { passive: true });
-    split.addEventListener('touchmove', function (e) {
-      if (!tracking) return;
-      var t = e.touches[0], mx = t.clientX - x0, my = t.clientY - y0;
-      if (!decided) {
-        if (Math.abs(mx) < 8 && Math.abs(my) < 8) return;
-        decided = true; horiz = Math.abs(mx) > Math.abs(my);
-        if (horiz) split.classList.add('dragging');
-      }
-      if (!horiz) return;                              // let vertical scroll win
-      dx = mx;
-      var base = document.body.getAttribute('data-page') === 'links' ? -W() : 0;
-      var px = Math.max(-W(), Math.min(0, base + dx));  // clamp between the two pages
-      split.style.setProperty('--ps', px + 'px');
-      if (e.cancelable) e.preventDefault();
-    }, { passive: false });
-    function end() {
-      if (!tracking) return; tracking = false;
-      var wasHoriz = horiz; horiz = false;
-      settle();                                        // always clear --ps + dragging → CSS animates the snap
-      if (!wasHoriz) return;
-      var page = document.body.getAttribute('data-page');
-      var TH = W() * 0.18;
-      if (page === 'tasks' && dx < -TH) markPage('links');
-      else if (page === 'links' && dx > TH) markPage('tasks');
-      closeFan();
-    }
-    split.addEventListener('touchend', end);
-    split.addEventListener('touchcancel', end);
   }
 
   /* ---- favourites fan (mobile) ---- */
@@ -1881,7 +1869,7 @@
     var scrim = $('#favFanScrim');
     if (scrim) scrim.addEventListener('click', closeFan);
 
-    initSwipe();
+    initPager();
   }
 
   /* ======================================================================

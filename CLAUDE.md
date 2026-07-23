@@ -18,13 +18,20 @@ independently-scrolling panes:
   a `فريق التنسيق` separator) → slim socials + install row. Groups collapse via the triangle head.
 
 **Desktop** = resizable split: a `.divider` drags the pane widths (saved to `localStorage`).
-**Mobile (≤820px)** = a two-page swipe pager instead: panes are `position:absolute` and offset
-by `transform:translateX`, a fixed liquid-glass **bottom tab bar** switches المهام/الروابط, and
-المفضلة moves into a **fan** popped from the ⭐ FAB. Pager gotchas that bite easily:
-- panes need `touch-action:pan-y` so the browser doesn't hijack the horizontal swipe;
-- the desktop `.divider` drag is hard-disabled on mobile (`if(isMobile())return`) — it fights the swipe;
-- the fixed tab bar / fan get `transform:translateZ(0)` (own layer) or iOS drops them mid-slide;
-- keep `will-change:transform` on the panes **only while `.dragging`**, never permanent.
+**Mobile (≤820px)** = a two-page pager built on a **native CSS scroll-snap track** — the browser
+owns the swipe (buttery on real touch; no hand-rolled touch JS, which glitched on iOS). `.split`
+becomes `overflow-x:auto; scroll-snap-type:x mandatory` and each `.pane` is `scroll-snap-align:start`
+(each pane keeps its own vertical scroll). A fixed liquid-glass **bottom tab bar** switches
+المهام/الروابط, and المفضلة moves into a **fan** popped from the ⭐ FAB. Pager gotchas that bite easily:
+- `setPage()` relaxes `scroll-snap-type` to `none` for the button's smooth `scrollTo`, then restores
+  it after ~480ms — **`mandatory` snap stalls an in-flight smooth scroll half-way between pages** (the
+  "empty half" glitch); the finger-swipe still snaps crisply because snap is on for touch;
+- a `scroll` listener (rAF-throttled) mirrors `scrollLeft` back into `data-page` so the tab indicator
+  follows the swipe;
+- `html{overflow-x:clip}` — the root must never scroll sideways (reveal/deco/maqr briefly overflow at
+  load and would shift the whole RTL page);
+- the desktop `.divider` drag is hard-disabled on mobile (`if(isMobile())return`);
+- the fixed tab bar / fan get `transform:translateZ(0)` (own layer) or iOS drops them mid-slide.
 
 ⚠️ **`.pill` name clash**: the assignee chip in the add-task sheet is `.picked .pill`; the task
 list "pills" view is `.task.pill`. Keep the chip rules scoped to `.picked .pill` or they repaint
