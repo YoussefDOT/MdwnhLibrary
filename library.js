@@ -40,7 +40,18 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
   function ar(n) { return Number(n || 0).toLocaleString('ar-EG'); }
-  function avatar(slug) { return 'MdwnhMembers/' + slug + '.png'; }
+  // Shared team roster — single source of truth (github.com/mdwnstudio/MdwnhMembers).
+  // Avatars load from there; the bundled MdwnhMembers/ folder is an offline fallback.
+  var ROSTER_BASE = 'https://raw.githubusercontent.com/mdwnstudio/MdwnhMembers/main';
+  function avatar(slug) { return ROSTER_BASE + '/avatars/' + slug + '.png'; }
+  // One delegated handler: any roster avatar that fails to load falls back to the local copy.
+  document.addEventListener('error', function (e) {
+    var img = e.target;
+    if (img && img.tagName === 'IMG' && String(img.src).indexOf(ROSTER_BASE) === 0) {
+      img.onerror = null;
+      img.src = 'MdwnhMembers/' + img.src.slice(img.src.lastIndexOf('/') + 1);
+    }
+  }, true);
   var reduceMotion = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
 
   function toast(msg) {
@@ -1956,8 +1967,13 @@
 
   function start() {
     wireStatic();
-    fetch('members.json').then(function (r) { return r.json(); }).then(function (data) {
-      ROSTER = data.members;
+    // Prefer the shared roster repo; fall back to the bundled members.json if it's unreachable.
+    fetch(ROSTER_BASE + '/members.json', { cache: 'no-cache' })
+      .then(function (r) { if (!r.ok) throw 0; return r.json(); })
+      .catch(function () { return fetch('members.json').then(function (r) { return r.json(); }); })
+      .then(function (data) {
+      // Only real, active members belong on the roster (drop dummies + deactivated members).
+      ROSTER = data.members.filter(function (m) { return !m.dummy && m.active !== false; });
       ADMIN_SLUG = data.adminSlug || 'nawaf';
       ROSTER.forEach(function (m) { BY_SLUG[m.slug] = m; });
 

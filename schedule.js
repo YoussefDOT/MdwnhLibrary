@@ -42,7 +42,9 @@
     'محمد سمير': 'mohamed-samier', 'مصطفى': 'mostafa', 'ملك': 'malak', 'منة': 'menna',
     'مورو': 'moro', 'نجود': 'njoud', 'نواف': 'nawaf', 'ورقاء': 'warqa', 'يوسف': 'youssef'
   };
-  const avatarUrl = (name) => 'MdwnhMembers/' + (NAME_TO_SLUG[name] || encodeURIComponent(name)) + '.png';
+  // Shared roster repo (single source of truth); falls back to local via the delegated img handler in library.js.
+  const ROSTER_BASE = 'https://raw.githubusercontent.com/mdwnstudio/MdwnhMembers/main';
+  const avatarUrl = (name) => ROSTER_BASE + '/avatars/' + (NAME_TO_SLUG[name] || encodeURIComponent(name)) + '.png';
 
   const WEEKDAYS = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
 
