@@ -13,6 +13,10 @@
 /* [hidden] must win over the display values set on .mini-btn/.modal/.gate-step */
 [hidden]{display:none!important}
 
+/* kill the mobile blue/grey tap-highlight flash site-wide */
+html{-webkit-tap-highlight-color:transparent}
+*{-webkit-tap-highlight-color:transparent}
+
 /* ---------- generic: hidden until app boots ---------- */
 body.locked{overflow:hidden}
 body.locked .appbar,
@@ -1323,7 +1327,7 @@ body.resizing .maqr-vid{pointer-events:none}
     border-radius:20px;
     background:linear-gradient(160deg,#fff,rgba(255,255,255,.72));
     box-shadow:0 6px 16px -8px rgba(38,38,38,.4), inset 0 1px 0 rgba(255,255,255,.9);
-    transition:transform .21s var(--spring);
+    transition:transform .06s var(--spring);
   }
   body[data-page=links] .tab-ind{transform:translateX(100%)}
   .tab-btn{
@@ -1341,7 +1345,7 @@ body.resizing .maqr-vid{pointer-events:none}
   /* ---------- مختصر floating star ---------- */
   .fab-fav{
     flex:0 0 auto;width:60px;height:60px;border-radius:22px;
-    align-self:flex-end;margin-bottom:-5px;    /* sits a touch lower so it reads as part of the bar */
+    align-self:flex-end;margin-bottom:4px;     /* lined up with the tab-bar row */
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
     border:1px solid rgba(255,255,255,.55);cursor:pointer;
     color:#fff;font-family:inherit;font-size:.6rem;font-weight:800;

@@ -1901,7 +1901,10 @@
   }
 
   /* ---- mobile page switching (the split is a native scroll-snap track) ---- */
+  var pagerCur = document.body.getAttribute('data-page') || 'tasks';  // committed page, shared by setPage + the swipe listener
+  var pagerTweening = false;   // true while setPage's own tween owns the indicator — the scroll listener must not fight it
   function markPage(p) {                                 // sync only the tab bar / indicator
+    pagerCur = p;
     document.body.setAttribute('data-page', p);
     var tt = $('#tabTasks'), tl = $('#tabLinks');
     if (tt) { tt.classList.toggle('on', p === 'tasks'); tt.setAttribute('aria-pressed', String(p === 'tasks')); }
@@ -1945,9 +1948,11 @@
       // for the tween, then restore it so finger-swipes still snap crisply.
       split.style.scrollSnapType = 'none';
       clearTimeout(setPage._snap);
-      animScrollLeft(split, left, 115, function () {
+      pagerTweening = true;
+      animScrollLeft(split, left, 58, function () {
         split.scrollLeft = left;            // land exactly on the page
         split.style.scrollSnapType = '';
+        pagerTweening = false;
         releaseIndicator();
       });
     }
@@ -1958,21 +1963,21 @@
      and drop the favourites fan once we've settled back on المهام. */
   function initPager() {
     var split = $('#split'); if (!split) return;
-    var raf = 0, settleT = 0, curPage = document.body.getAttribute('data-page') || 'tasks';
+    var raf = 0, settleT = 0;
     split.addEventListener('scroll', function () {
       if (raf) return;
       raf = requestAnimationFrame(function () {
         raf = 0;
         if (!isMobile()) return;
+        if (pagerTweening) return;   // setPage's own tween/CSS-transition already owns the indicator — don't fight it
         var frac = split.scrollLeft / split.clientWidth;
         trackIndicator(frac);
         // hysteresis band around the midpoint: a wobbling finger near 50% must
         // not flip the committed page (and its tab classes/aria) back and forth
-        var next = curPage;
-        if (curPage === 'tasks' && frac > 0.6) next = 'links';
-        else if (curPage === 'links' && frac < 0.4) next = 'tasks';
-        if (next !== curPage) {
-          curPage = next;
+        var next = pagerCur;
+        if (pagerCur === 'tasks' && frac > 0.6) next = 'links';
+        else if (pagerCur === 'links' && frac < 0.4) next = 'tasks';
+        if (next !== pagerCur) {
           markPage(next);
           if (next === 'tasks') closeFan();
         }
@@ -1982,23 +1987,25 @@
     }, { passive: true });
 
     /* Flick-to-page: a quick horizontal flick commits to the next page even if
-       the finger didn't drag past the snap threshold. We read the browser's own
-       scroll delta (sign already correct for RTL) so a small nudge toward a page
-       finishes the trip — native snap still handles slow, full drags. */
-    var sx = 0, sy = 0, st = 0, ssl = 0;
+       the finger didn't drag past the snap threshold. touchend fires the instant
+       the finger lifts — BEFORE the browser's momentum/snap animation has moved
+       scrollLeft at all — so deciding from scrollLeft delta here always reads ~0
+       for a real flick and silently does nothing. Use the finger's own on-screen
+       travel (dx) instead; direction is negated because `.split` is forced LTR
+       (tasks pane physically left, links pane physically right) while a finger
+       dragging right-to-left (dx<0) reveals the pane further along scrollLeft. */
+    var sx = 0, sy = 0, st = 0;
     split.addEventListener('touchstart', function (e) {
       if (!isMobile()) return;
       var t = e.touches[0];
-      sx = t.clientX; sy = t.clientY; st = Date.now(); ssl = split.scrollLeft;
+      sx = t.clientX; sy = t.clientY; st = Date.now();
     }, { passive: true });
     split.addEventListener('touchend', function (e) {
       if (!isMobile()) return;
       var t = e.changedTouches[0];
       var dx = t.clientX - sx, dy = t.clientY - sy, dt = Date.now() - st;
       if (dt > 350 || Math.abs(dx) < 35 || Math.abs(dx) < Math.abs(dy)) return; // not a horizontal flick
-      var moved = split.scrollLeft - ssl;      // browser's own sign (RTL-safe)
-      if (Math.abs(moved) < 4) return;         // track didn't budge — let native snap decide
-      setPage(moved > 0 ? 'links' : 'tasks');
+      setPage(dx < 0 ? 'links' : 'tasks');
     }, { passive: true });
   }
 
