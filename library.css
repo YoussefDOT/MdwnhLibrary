@@ -346,6 +346,7 @@ html[dir=rtl] .group.collapsed .tri svg{transform:rotate(90deg)}
   animation-delay:var(--d,0s);
 }
 @keyframes taskIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+#taskList.silent .task{animation:none}
 .task::before{
   content:"";position:absolute;inset:0;z-index:-1;
   background:linear-gradient(165deg,rgba(255,255,255,.18),transparent 58%);
@@ -674,7 +675,7 @@ html[dir=rtl] .subgroup.collapsed .tri svg{transform:rotate(90deg)}
 .cal-time input:focus{outline:none;border-color:var(--gold)}
 
 /* chosen members preview + picker */
-.picked{display:flex;flex-wrap:wrap;gap:8px;min-height:44px;align-items:center}
+.picked{display:flex;flex-wrap:wrap;gap:6px;min-height:44px;align-items:center}
 .picked .none{font-size:.83rem;font-weight:600;color:#b0a89d}
 /* scoped to #picked so it can't leak onto the task ".task.pill" list rows */
 .picked .pill{
@@ -692,8 +693,8 @@ html[dir=rtl] .subgroup.collapsed .tri svg{transform:rotate(90deg)}
 .picked .pill button svg{width:9px;height:9px}
 
 .people{
-  display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));
-  gap:10px;
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));
+  gap:6px;
 }
 .person{
   display:flex;flex-direction:column;align-items:center;gap:6px;
@@ -1025,9 +1026,12 @@ html[dir=rtl] .subgroup.collapsed .tri svg{transform:rotate(90deg)}
 /* inputs/calendar inside a card sit on white so they lift off the card tint */
 .add-card .cal{background:#fff}
 .add-card .cal-day{background:#faf9f7}
+.add-card .cal-day.on{background:var(--gold)}
 @media(max-width:680px){
   .add-grid{grid-template-columns:1fr}
 }
+/* المكلَّفون sits full-width below the two columns — the extra room is the point */
+.add-card.wide .people{grid-template-columns:repeat(auto-fill,minmax(72px,1fr))}
 
 /* ---------- quicklink modal: live preview ---------- */
 .sheet.narrow{width:min(430px,100%)}
@@ -1210,6 +1214,9 @@ body.resizing .maqr-vid{pointer-events:none}
 .task.pill .task-pts{width:30px;height:30px;inset-block-start:6px;inset-inline-end:6px}
 /* the leader edit affordance moves out of the corner on pills */
 .task.pill .task-edit{position:static;order:5;width:34px;height:34px;flex:0 0 auto;background:rgba(0,0,0,.16)}
+/* assignee avatars in the horizontal pill row — same stack as the card, just inline */
+.task.pill .who{margin-inline-end:2px}
+.task.pill .who img,.task.pill .who .more{border-color:rgba(255,255,255,.7)}
 
 /* ==========================================================================
    12. SLIM BOTTOM ROW (socials + install) — replaces the footer scene
@@ -1316,7 +1323,7 @@ body.resizing .maqr-vid{pointer-events:none}
     border-radius:20px;
     background:linear-gradient(160deg,#fff,rgba(255,255,255,.72));
     box-shadow:0 6px 16px -8px rgba(38,38,38,.4), inset 0 1px 0 rgba(255,255,255,.9);
-    transition:transform .42s var(--spring);
+    transition:transform .21s var(--spring);
   }
   body[data-page=links] .tab-ind{transform:translateX(100%)}
   .tab-btn{

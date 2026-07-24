@@ -740,6 +740,7 @@
         tagsHtml(t) +
         '<span class="pill-quote">' + esc(done ? 'أحسنت، أتممتها.' : nudgeFor(c.ms)) + '</span>' +
       '</span>' +
+      whoHtml(t, adminView) +
       cdCompact(t) +
       (adminView ? '<button class="task-edit" type="button" title="تعديل المهمة" aria-label="تعديل المهمة">' + ICON.edit + '</button>' : '') +
       action;
@@ -919,9 +920,13 @@
     return wrap;
   }
 
-  function renderTasks() {
+  function renderTasks(silent) {
     var host = $('#taskList');
     if (!host || !me) return;
+    // background refreshes (poll/visibilitychange/late-countdown) rebuild the same
+    // DOM from scratch — without this, every one of them replayed the card
+    // entrance animation for the whole list every few seconds
+    host.classList.toggle('silent', !!silent);
     host.innerHTML = '';
 
     var all = sortByDue(myTasks());
@@ -1009,7 +1014,7 @@
   function tickCountdowns() {
     $$('.cd[data-due], .pill-cd[data-due]').forEach(function (cd) {
       var c = countdown(Number(cd.dataset.due));
-      if (c.late) { renderTasks(); return; }
+      if (c.late) { renderTasks(true); return; }
       var d = $('[data-u=d]', cd), h = $('[data-u=h]', cd);
       if (d) d.textContent = ar(c.days);
       if (h) h.textContent = ar(c.hours);
@@ -1828,7 +1833,7 @@
       tasks = t || {};
       if (ld) ld.hidden = true;
       if (lbl) lbl.hidden = true;
-      renderTasks();
+      renderTasks(!showLoader);
     }).catch(function () {
       if (ld) ld.hidden = true;
       if (lbl) lbl.hidden = true;
@@ -1915,6 +1920,20 @@
       if (p < 1) requestAnimationFrame(step); else if (done) done();
     })(performance.now());
   }
+  /* drive the tab-bar pill 1:1 with scroll progress while a swipe/tween is in
+     flight — a discrete flip at the 50% mark makes it snap back and forth when
+     the finger wobbles near the threshold, so instead we follow the finger and
+     only hand control back to the CSS spring once the track has settled. */
+  function trackIndicator(frac) {
+    var ind = $('#tabInd'); if (!ind) return;
+    ind.style.transition = 'none';
+    ind.style.transform = 'translateX(' + (Math.max(0, Math.min(1, frac)) * 100) + '%)';
+  }
+  function releaseIndicator() {
+    var ind = $('#tabInd'); if (!ind) return;
+    ind.style.transition = '';
+    ind.style.transform = '';
+  }
   function setPage(p) {
     if (p !== 'tasks' && p !== 'links') return;
     markPage(p);
@@ -1926,9 +1945,10 @@
       // for the tween, then restore it so finger-swipes still snap crisply.
       split.style.scrollSnapType = 'none';
       clearTimeout(setPage._snap);
-      animScrollLeft(split, left, 230, function () {
+      animScrollLeft(split, left, 115, function () {
         split.scrollLeft = left;            // land exactly on the page
         split.style.scrollSnapType = '';
+        releaseIndicator();
       });
     }
     closeFan();
@@ -1938,17 +1958,26 @@
      and drop the favourites fan once we've settled back on المهام. */
   function initPager() {
     var split = $('#split'); if (!split) return;
-    var raf = 0;
+    var raf = 0, settleT = 0, curPage = document.body.getAttribute('data-page') || 'tasks';
     split.addEventListener('scroll', function () {
       if (raf) return;
       raf = requestAnimationFrame(function () {
         raf = 0;
         if (!isMobile()) return;
-        var p = split.scrollLeft > split.clientWidth * 0.5 ? 'links' : 'tasks';
-        if (p !== document.body.getAttribute('data-page')) {
-          markPage(p);
-          if (p === 'tasks') closeFan();
+        var frac = split.scrollLeft / split.clientWidth;
+        trackIndicator(frac);
+        // hysteresis band around the midpoint: a wobbling finger near 50% must
+        // not flip the committed page (and its tab classes/aria) back and forth
+        var next = curPage;
+        if (curPage === 'tasks' && frac > 0.6) next = 'links';
+        else if (curPage === 'links' && frac < 0.4) next = 'tasks';
+        if (next !== curPage) {
+          curPage = next;
+          markPage(next);
+          if (next === 'tasks') closeFan();
         }
+        clearTimeout(settleT);
+        settleT = setTimeout(releaseIndicator, 80);
       });
     }, { passive: true });
 

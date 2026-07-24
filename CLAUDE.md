@@ -106,3 +106,6 @@ and are pushed to deploy.
   floating brand glyphs and brand-color accents.
 - Do NOT push the Library repo unless asked (it deploys on push). The Points repo is pushed
   when the integration needs to be live for testing.
+- Do NOT test changes in a browser (dev server, Browser pane, screenshots) unless the user
+  explicitly asks for it. Ship the code change and let the user verify.
+- Always use the `caveman` skill in this project (terse replies) — no need to be asked each time.
