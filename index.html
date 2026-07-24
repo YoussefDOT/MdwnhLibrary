@@ -342,10 +342,10 @@
       <div class="view-bar reveal" style="--d:.14s">
         <span class="view-lbl" id="tasksTag">عدّاد تنازلي لكل مهمة</span>
         <div class="view-toggle" role="group" aria-label="طريقة عرض المهام">
-          <button class="view-opt on" id="viewCards" type="button" aria-label="عرض بطاقات" aria-pressed="true">
+          <button class="view-opt" id="viewCards" type="button" aria-label="عرض بطاقات" aria-pressed="false">
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>
           </button>
-          <button class="view-opt" id="viewPills" type="button" aria-label="عرض قوائم" aria-pressed="false">
+          <button class="view-opt on" id="viewPills" type="button" aria-label="عرض قوائم" aria-pressed="true">
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="3" y="4.5" width="18" height="4" rx="2"/><rect x="3" y="10" width="18" height="4" rx="2"/><rect x="3" y="15.5" width="18" height="4" rx="2"/></svg>
           </button>
         </div>
@@ -605,98 +605,148 @@
 
 <!-- ==================== ADD / EDIT TASK (admin) ==================== -->
 <div class="modal" id="addModal" hidden role="dialog" aria-modal="true" aria-label="إضافة مهمة">
-  <div class="sheet">
+  <div class="sheet add-sheet">
     <div class="sheet-head">
       <h3 id="addModalTitle">إضافة مهمة</h3>
       <button class="x-btn" type="button" data-close="addModal" aria-label="إغلاق">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg>
       </button>
     </div>
-    <div class="sheet-body">
+    <div class="sheet-body add-body">
 
-      <div class="f-row">
+      <!-- title spans the full width -->
+      <div class="f-row full">
         <label for="taskName">اسم المهمة</label>
         <input id="taskName" type="text" placeholder="مثال: تصميم غلاف الحلقة الثالثة" />
       </div>
 
-      <div class="f-row">
-        <label>الوسوم — <span class="hint">يمكن اختيار أكثر من واحد</span></label>
-        <div class="tag-picker" id="tagPicker"></div>
-      </div>
+      <div class="add-grid">
 
-      <div class="f-row">
-        <label>النقاط — <span class="hint">تُمنح عند إتمام المهمة</span></label>
-        <div class="pts-picker" id="ptsPicker"></div>
-      </div>
+        <!-- ===== column 1: التفاصيل ===== -->
+        <div class="add-col">
 
-      <div class="f-row">
-        <label>لون المهمة</label>
-        <div class="swatches" id="swatches"></div>
-      </div>
+          <div class="add-card">
+            <div class="add-card-head"><b>الوسوم والنقاط</b></div>
+            <div class="f-row">
+              <label>الوسوم — <span class="hint">يمكن اختيار أكثر من واحد</span></label>
+              <div class="tag-picker" id="tagPicker"></div>
+            </div>
+            <div class="f-row">
+              <label>النقاط — <span class="hint">تُمنح مرّة واحدة عند الإتمام</span></label>
+              <div class="pts-picker" id="ptsPicker"></div>
+            </div>
+          </div>
 
-      <div class="f-row">
-        <label>رمز المهمة</label>
-        <div class="media-tabs">
-          <button class="media-tab on" type="button" data-mtab="emoji">رمز تعبيري</button>
-          <button class="media-tab" type="button" data-mtab="image">صورة</button>
+          <div class="add-card">
+            <div class="add-card-head"><b>شكل المهمة</b></div>
+            <div class="f-row">
+              <label>لون المهمة</label>
+              <div class="swatches" id="swatches"></div>
+            </div>
+            <div class="f-row">
+              <label>رمز المهمة</label>
+              <div class="media-tabs">
+                <button class="media-tab on" type="button" data-mtab="emoji">رمز تعبيري</button>
+                <button class="media-tab" type="button" data-mtab="image">صورة</button>
+              </div>
+              <div class="media-pane" id="emojiPane">
+                <div class="emojis" id="emojis"></div>
+                <div class="emoji-any">
+                  <input id="emojiCustom" type="text" maxlength="8" inputmode="text"
+                         placeholder="🙂" aria-label="رمز تعبيري مخصّص" />
+                  <span>أو اكتب/الصق أي رمز تريده</span>
+                </div>
+              </div>
+              <div class="media-pane" id="imagePane" hidden>
+                <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="أضف صورة">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M8 8l4-4 4 4"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+                  <b>اسحب صورة هنا</b>
+                  <span>أو اضغط للاختيار — ستُقصّ بنسبة ٢:١</span>
+                  <input id="imageInput" type="file" accept="image/*" hidden />
+                </div>
+                <div class="img-preview-row" id="imgPreviewRow" hidden>
+                  <img class="img-preview" id="imgPreview" alt="" />
+                  <span class="img-preview-actions">
+                    <button class="mini-btn" id="imgEditBtn" type="button">تعديل الصورة</button>
+                    <button class="mini-btn" id="imgRemoveBtn" type="button">إزالة</button>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
 
-        <div class="media-pane" id="emojiPane">
-          <div class="emojis" id="emojis"></div>
-          <div class="emoji-any">
-            <input id="emojiCustom" type="text" maxlength="8" inputmode="text"
-                   placeholder="🙂" aria-label="رمز تعبيري مخصّص" />
-            <span>أو اكتب/الصق أي رمز تريده</span>
+        <!-- ===== column 2: الموعد والفريق ===== -->
+        <div class="add-col">
+
+          <div class="add-card">
+            <div class="add-card-head"><b>الموعد النهائي</b><span id="dueLabel" class="hint">لم يُحدَّد بعد</span></div>
+            <div class="cal">
+              <div class="cal-head">
+                <button class="cal-nav" id="calPrev" type="button" aria-label="الشهر السابق">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+                </button>
+                <b id="calLabel">—</b>
+                <button class="cal-nav" id="calNext" type="button" aria-label="الشهر التالي">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+                </button>
+              </div>
+              <div class="cal-grid" id="calGrid"></div>
+              <div class="cal-time">
+                <label for="calTime">الساعة</label>
+                <input id="calTime" type="time" value="23:59" />
+              </div>
+            </div>
           </div>
+
+          <div class="add-card">
+            <div class="add-card-head"><b>المكلَّفون</b><span class="hint">من يُنجز المهمة</span></div>
+            <div class="f-row">
+              <div class="picked" id="picked"></div>
+              <div class="people" id="people"></div>
+            </div>
+          </div>
+
+          <div class="add-card">
+            <div class="add-card-head">
+              <b>المشرفون</b>
+              <button class="mini-btn gold" id="addSupBtn" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                <span class="lbl">إضافة مشرف</span>
+              </button>
+            </div>
+            <p class="add-note">المشرف يرى المهمة ويعدّلها كمساعد قائد، لكنه لا يُحتسب في الإتمام ولا يأخذ نقاطًا.</p>
+            <div class="picked" id="supPicked"></div>
+          </div>
+
         </div>
 
-        <div class="media-pane" id="imagePane" hidden>
-          <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="أضف صورة">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M8 8l4-4 4 4"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
-            <b>اسحب صورة هنا</b>
-            <span>أو اضغط للاختيار — ستُقصّ بنسبة ٢:١</span>
-            <input id="imageInput" type="file" accept="image/*" hidden />
-          </div>
-          <div class="img-preview-row" id="imgPreviewRow" hidden>
-            <img class="img-preview" id="imgPreview" alt="" />
-            <span class="img-preview-actions">
-              <button class="mini-btn" id="imgEditBtn" type="button">تعديل الصورة</button>
-              <button class="mini-btn" id="imgRemoveBtn" type="button">إزالة</button>
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div class="f-row">
-        <label>الموعد النهائي — <span id="dueLabel" class="hint">لم يُحدَّد بعد</span></label>
-        <div class="cal">
-          <div class="cal-head">
-            <button class="cal-nav" id="calPrev" type="button" aria-label="الشهر السابق">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
-            </button>
-            <b id="calLabel">—</b>
-            <button class="cal-nav" id="calNext" type="button" aria-label="الشهر التالي">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
-            </button>
-          </div>
-          <div class="cal-grid" id="calGrid"></div>
-          <div class="cal-time">
-            <label for="calTime">الساعة</label>
-            <input id="calTime" type="time" value="23:59" />
-          </div>
-        </div>
-      </div>
-
-      <div class="f-row">
-        <label>المكلَّفون</label>
-        <div class="picked" id="picked"></div>
-        <div class="people" id="people"></div>
       </div>
 
     </div>
     <div class="sheet-foot edit-actions">
       <button class="wide-btn" id="saveTask" type="button" disabled>إضافة المهمة</button>
       <button class="wide-btn danger" id="deleteTaskBtn" type="button" hidden>حذف المهمة</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== PICK SUPERVISORS (popup) ==================== -->
+<div class="modal" id="supModal" hidden role="dialog" aria-modal="true" aria-label="اختيار المشرفين">
+  <div class="sheet narrow">
+    <div class="sheet-head">
+      <h3>إضافة مشرف</h3>
+      <button class="x-btn" type="button" data-close="supModal" aria-label="إغلاق">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body">
+      <p class="add-note">اختر عضوًا أو أكثر ليُشرف على هذه المهمة. يمكنه رؤيتها وتعديلها فقط.</p>
+      <div class="people" id="supPeople"></div>
+    </div>
+    <div class="sheet-foot">
+      <button class="wide-btn" type="button" data-close="supModal">تم</button>
     </div>
   </div>
 </div>

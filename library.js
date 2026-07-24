@@ -215,7 +215,7 @@
   var quicklinks = {};    // {id:{name,url,icon,color}}
   var tasks = {};         // {taskId:task}
   var pollTimer = null, tickTimer = null, booted = false;
-  var taskView = 'cards'; // task appearance: 'cards' | 'pills'
+  var taskView = 'pills'; // task appearance: 'cards' | 'pills' (default: pills)
 
   /* task tags: key -> {label, color} — colours match the spec */
   var TAGS = {
@@ -514,6 +514,11 @@
      ====================================================================== */
   function assigneesOf(t) { return Object.keys(t.assignees || {}); }
   function isDoneFor(t, slug) { return !!(t.done && t.done[slug]); }
+  /* points are earned once per (task,member) — a task pulled back from the
+     archive and re-completed must NOT mint a second claim */
+  function hasEarned(t, slug) { return !!(t.earned && t.earned[slug]); }
+  function supervisorsOf(t) { return Object.keys(t.supervisors || {}); }
+  function isSupervisorOf(t) { return !!(me && t.supervisors && t.supervisors[me.slug]); }
   function isFullyDone(t) {
     var a = assigneesOf(t);
     return a.length > 0 && a.every(function (s) { return isDoneFor(t, s); });
@@ -523,6 +528,16 @@
       var t = tasks[id]; t.id = id; return t;
     }).filter(function (t) {
       return isAdmin ? true : !!(t.assignees && t.assignees[me.slug]);
+    });
+  }
+  /* tasks I watch over as مشرف (not necessarily assigned to me). Admins already
+     see everything, so this is only meaningful for regular members. */
+  function supervisedTasks() {
+    if (isAdmin || !me) return [];
+    return Object.keys(tasks).map(function (id) {
+      var t = tasks[id]; t.id = id; return t;
+    }).filter(function (t) {
+      return !!(t.supervisors && t.supervisors[me.slug]);
     });
   }
   function sortByDue(list) {
@@ -599,13 +614,16 @@
 
   function taskCard(t, i, opts) {
     opts = opts || {};
-    var done = isDoneFor(t, isAdmin && opts.viewSlug ? opts.viewSlug : me.slug);
+    // a supervisor sees "their" task with the same admin-style card (progress
+    // badge + edit) even though they aren't the leader
+    var adminView = isAdmin || opts.supervise;
+    var done = isDoneFor(t, adminView && opts.viewSlug ? opts.viewSlug : me.slug);
     var full = isFullyDone(t);
     var c = countdown(t.due);
     var color = t.color || '#41b9a6';
     var el = document.createElement('article');
     el.className = 'task' +
-      (done || (isAdmin && full) ? ' done' : '') +
+      (done || (adminView && full) ? ' done' : '') +
       (c.late ? ' overdue' : '') +
       (!c.late && c.ms <= 864e5 ? ' urgent' : '') +
       (opts.fire ? ' fire' : '');
@@ -619,7 +637,7 @@
       // one tap can complete a task, so the archive is where that gets undone
       action = '<button class="task-do undo" type="button" aria-label="تراجع عن إتمام المهمة">' +
         ICON.undo + ' تراجع</button>';
-    } else if (isAdmin) {
+    } else if (adminView) {
       var n = assigneesOf(t).filter(function (s2) { return isDoneFor(t, s2); }).length;
       action = '<span class="task-done-badge">' + (full ? ICON.check : '') +
         ' ' + ar(n) + '/' + ar(assigneesOf(t).length) + '</span>';
@@ -630,7 +648,7 @@
         ICON.check + ' تم</button>';
     }
 
-    var pts = (t.points && !done && !(isAdmin && full))
+    var pts = (t.points && !done && !(adminView && full))
       ? '<span class="task-pts"><img src="' + esc(sticker(t.points)) + '" alt="' + ar(t.points) + ' نقطة" loading="lazy"></span>'
       : '';
 
@@ -645,11 +663,11 @@
         '<span class="task-headtxt">' + titleTags + '</span></span>';
 
     el.innerHTML =
-      (isAdmin ? '<button class="task-edit" type="button" title="تعديل المهمة" aria-label="تعديل المهمة">' + ICON.edit + '</button>' : '') +
+      (adminView ? '<button class="task-edit" type="button" title="تعديل المهمة" aria-label="تعديل المهمة">' + ICON.edit + '</button>' : '') +
       pts +
       head +
       '<span class="task-meta"><span class="task-due">' + esc(dueLabelOf(t)) + '</span>' +
-      whoHtml(t, isAdmin) + '</span>' +
+      whoHtml(t, adminView) + '</span>' +
       '<span class="task-nudge">' + esc(done ? 'أحسنت، أتممتها.' : nudgeFor(c.ms)) + '</span>' +
       cdHtml(t) +
       action;
@@ -679,13 +697,14 @@
   /* ---------- one task as a horizontal pill (traditional list look) ---------- */
   function taskPill(t, i, opts) {
     opts = opts || {};
-    var done = isDoneFor(t, isAdmin && opts.viewSlug ? opts.viewSlug : me.slug);
+    var adminView = isAdmin || opts.supervise;
+    var done = isDoneFor(t, adminView && opts.viewSlug ? opts.viewSlug : me.slug);
     var full = isFullyDone(t);
     var c = countdown(t.due);
     var color = t.color || '#41b9a6';
     var el = document.createElement('article');
     el.className = 'task pill' +
-      (done || (isAdmin && full) ? ' done' : '') +
+      (done || (adminView && full) ? ' done' : '') +
       (c.late ? ' overdue' : '') +
       (!c.late && c.ms <= 864e5 ? ' urgent' : '') +
       (opts.fire ? ' fire' : '');
@@ -697,14 +716,14 @@
     var media = t.img
       ? '<img class="task-img" src="' + esc(t.img) + '" alt="" loading="lazy">'
       : '<span class="task-emoji">' + esc(t.emoji || '📌') + '</span>';
-    var pts = (t.points && !done && !(isAdmin && full))
+    var pts = (t.points && !done && !(adminView && full))
       ? '<span class="task-pts"><img src="' + esc(sticker(t.points)) + '" alt="' + ar(t.points) + ' نقطة" loading="lazy"></span>'
       : '';
 
     var action;
     if (opts.archive && isDoneFor(t, me.slug)) {
       action = '<button class="pill-check undo" type="button" aria-label="تراجع عن إتمام المهمة">' + ICON.undo + ' تراجع</button>';
-    } else if (isAdmin) {
+    } else if (adminView) {
       var n = assigneesOf(t).filter(function (s2) { return isDoneFor(t, s2); }).length;
       action = '<span class="pill-check badge">' + (full ? ICON.check : '') + ' ' + ar(n) + '/' + ar(assigneesOf(t).length) + '</span>';
     } else if (done) {
@@ -722,7 +741,7 @@
         '<span class="pill-quote">' + esc(done ? 'أحسنت، أتممتها.' : nudgeFor(c.ms)) + '</span>' +
       '</span>' +
       cdCompact(t) +
-      (isAdmin ? '<button class="task-edit" type="button" title="تعديل المهمة" aria-label="تعديل المهمة">' + ICON.edit + '</button>' : '') +
+      (adminView ? '<button class="task-edit" type="button" title="تعديل المهمة" aria-label="تعديل المهمة">' + ICON.edit + '</button>' : '') +
       action;
 
     var btn = $('.pill-check', el);
@@ -769,7 +788,8 @@
 
     dbPut(ROOT + '/tasks/' + id + '/done/' + me.slug, t.done[me.slug])
       .then(function () {
-        if (t.points) { writeClaim(t); }
+        if (t.points && !hasEarned(t, me.slug)) { writeClaim(t); }
+        else if (t.points) { toast('أحسنت! تمّت المهمة — نقاطها استُلمت سابقًا'); }
         else toast('أحسنت! تمّت المهمة 🎉');
         setTimeout(renderTasks, 900);
       })
@@ -789,6 +809,12 @@
     var payload = { taskId: t.id, title: t.title, points: t.points, color: t.color || '#3bb9ab', ts: Date.now() };
     dbPut(ROOT + '/claims/' + encodeURIComponent(key) + '/' + t.id, payload)
       .catch(function () { /* the popup still offers a manual path */ });
+    // Stamp the points as earned so a re-completion (after un-archiving) can't
+    // mint a second claim. Kept separate from `done` — un-completing clears
+    // `done` but this stays, so points are strictly once per member per task.
+    t.earned = t.earned || {}; t.earned[me.slug] = true;
+    dbPut(ROOT + '/tasks/' + t.id + '/earned/' + me.slug, true)
+      .catch(function () { /* best effort — claim already written */ });
     showClaim(t);
   }
 
@@ -835,7 +861,7 @@
   /* returns true only when the delete actually proceeds — the edit panel uses
      that to know whether it should close itself or the user hit "cancel" */
   function deleteTask(id, title) {
-    if (!isAdmin) return false;
+    if (!isAdmin && !(tasks[id] && tasks[id].supervisors && tasks[id].supervisors[me.slug])) return false;
     if (!window.confirm('حذف المهمة «' + title + '» نهائيًا؟\nسيختفي هذا من قوائم كل المكلَّفين.')) return false;
     var backup = tasks[id];
     delete tasks[id];
@@ -908,15 +934,45 @@
     var ab = $('#archCount');
     if (ab) ab.textContent = arch ? ' (' + ar(arch) + ')' : '';
 
-    if (!open.length) { host.appendChild(emptyState()); return; }
-
     if (!isAdmin) {
+      // مهام تشرف عليها — a collapsible group above your own tasks, mini-admin
+      // view (progress + edit), just like the leader's حريقة section
+      // exclude anything I'm also assigned — that already shows in my own list
+      var sup = sortByDue(supervisedTasks()).filter(function (t) {
+        return !isFullyDone(t) && !(t.assignees && t.assignees[me.slug]);
+      });
+      if (sup.length) {
+        var sec = document.createElement('section');
+        sec.className = 'subgroup supervising';
+        sec.dataset.group = 'sup-watch';
+        sec.innerHTML =
+          '<button class="sub-head" type="button" aria-expanded="true">' +
+          '<span class="tri">' + ICON.tri + '</span>' +
+          '<h3>قيد إشرافك 👁️</h3>' +
+          '<span class="why">مهام تُشرف عليها — تابِع تقدّمها وعدّلها</span>' +
+          '<span class="count">' + ar(sup.length) + '</span>' +
+          '<span class="rule"></span>' +
+          '</button>' +
+          '<div class="group-body"><div class="group-inner"><div class="' + listClass() + '"></div></div></div>';
+        var slst = $('.task-list', sec);
+        sup.forEach(function (t, i) { slst.appendChild(renderTaskEl(t, i, { supervise: true })); });
+        host.appendChild(sec);
+        wireAllGroups(host);
+      }
+
+      if (!open.length) {
+        // only show the "all done" cheer when there's genuinely nothing else here
+        if (!sup.length) host.appendChild(emptyState());
+        return;
+      }
       var list = document.createElement('div');
       list.className = listClass();
       open.forEach(function (t, i) { list.appendChild(renderTaskEl(t, i)); });
       host.appendChild(list);
       return;
     }
+
+    if (!open.length) { host.appendChild(emptyState()); return; }
 
     /* --- admin: حريقة (<=2 days) vs the rest --- */
     var TWO_DAYS = 2 * 864e5;
@@ -988,7 +1044,7 @@
   var COLORS = ['#e54b2a', '#f3c02b', '#41b9a6', '#0b6eb9', '#8a5a12', '#9b5de5', '#ef476f', '#2a9d8f'];
   var EMOJIS = ['📌', '🎬', '✍️', '🎨', '📸', '📊', '📣', '🎧', '🗂️', '⚡', '🔥', '🌙', '⭐', '📝', '🎯', '💡'];
 
-  var draft = { color: COLORS[0], emoji: EMOJIS[0], due: null, members: {}, tags: {}, points: null, img: null, mediaTab: 'emoji' };
+  var draft = { color: COLORS[0], emoji: EMOJIS[0], due: null, members: {}, supervisors: {}, tags: {}, points: null, img: null, mediaTab: 'emoji' };
   var calCursor = new Date();
   var editingTaskId = null;   // null = adding a new task; a task id = editing that task in place
 
@@ -1290,6 +1346,44 @@
     });
   }
 
+  /* ---------- مشرفون (supervisors) ---------- */
+  /* chips shown in the add/edit sheet next to the "إضافة مشرف" button */
+  function renderSupPicked() {
+    var w = $('#supPicked'); if (!w) return; w.innerHTML = '';
+    var keys = Object.keys(draft.supervisors);
+    if (!keys.length) { w.innerHTML = '<span class="none">لا مشرف على هذه المهمة</span>'; return; }
+    keys.forEach(function (s) {
+      var m = BY_SLUG[s]; if (!m) return;
+      var p = document.createElement('span');
+      p.className = 'pill';
+      p.innerHTML = '<img src="' + esc(avatar(s)) + '" alt=""><span>' + esc(m.name) + '</span>' +
+        '<button type="button" aria-label="إزالة ' + esc(m.name) + '">' + ICON.x + '</button>';
+      $('button', p).addEventListener('click', function () {
+        delete draft.supervisors[s]; renderSupPicked(); renderSupPeople();
+      });
+      w.appendChild(p);
+    });
+  }
+  /* the member grid inside the supervisor popup (multi-select) */
+  function renderSupPeople() {
+    var w = $('#supPeople'); if (!w) return; w.innerHTML = '';
+    ROSTER.filter(function (m) { return !m.admin; }).forEach(function (m) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'person' + (draft.supervisors[m.slug] ? ' on' : '');
+      b.innerHTML = '<img src="' + esc(avatar(m.slug)) + '" alt="" loading="lazy">' +
+        '<span class="pname">' + esc(m.name) + '</span>' +
+        '<span class="tick">' + ICON.check + '</span>';
+      b.setAttribute('aria-pressed', String(!!draft.supervisors[m.slug]));
+      b.addEventListener('click', function () {
+        if (draft.supervisors[m.slug]) delete draft.supervisors[m.slug];
+        else draft.supervisors[m.slug] = true;
+        renderSupPeople(); renderSupPicked();
+      });
+      w.appendChild(b);
+    });
+  }
+
   function validateDraft() {
     var ok = $('#taskName').value.trim() && draft.due && Object.keys(draft.members).length;
     $('#saveTask').disabled = !ok;
@@ -1305,7 +1399,7 @@
 
   function resetDraft() {
     editingTaskId = null;
-    draft = { color: COLORS[0], emoji: EMOJIS[0], due: null, members: {}, tags: {}, points: null, img: null, mediaTab: 'emoji' };
+    draft = { color: COLORS[0], emoji: EMOJIS[0], due: null, members: {}, supervisors: {}, tags: {}, points: null, img: null, mediaTab: 'emoji' };
     calCursor = new Date();
     $('#taskName').value = '';
     $('#calTime').value = '23:59';
@@ -1317,7 +1411,7 @@
     if ($('#imgPreviewRow')) $('#imgPreviewRow').hidden = true;
     setMediaTab('emoji');
     renderSwatches(); renderEmojis(); renderTags(); renderPoints();
-    renderCal(); renderPicked(); renderPeople(); validateDraft();
+    renderCal(); renderPicked(); renderPeople(); renderSupPicked(); renderSupPeople(); validateDraft();
     $('#addModalTitle').textContent = 'إضافة مهمة';
     $('#saveTask').textContent = 'إضافة المهمة';
     if ($('#deleteTaskBtn')) $('#deleteTaskBtn').hidden = true;
@@ -1332,6 +1426,7 @@
     draft.color = t.color || COLORS[0];
     draft.due = t.due || null;
     draft.members = Object.assign({}, t.assignees || {});
+    draft.supervisors = Object.assign({}, t.supervisors || {});
     draft.tags = Object.assign({}, t.tags || {});
     draft.points = t.points || null;
     calCursor = t.due ? new Date(t.due) : new Date();
@@ -1353,7 +1448,7 @@
     }
 
     renderSwatches(); renderEmojis(); renderTags(); renderPoints();
-    renderCal(); renderPicked(); renderPeople(); validateDraft();
+    renderCal(); renderPicked(); renderPeople(); renderSupPicked(); renderSupPeople(); validateDraft();
 
     $('#addModalTitle').textContent = 'تعديل المهمة';
     $('#saveTask').textContent = 'حفظ التعديلات';
@@ -1365,11 +1460,13 @@
     // which media wins is whatever tab is active right now
     if (draft.mediaTab !== 'image') draft.img = null;
 
-    // gentle nudges — the spec wants a warning, not a hard block
-    if (!Object.keys(draft.tags).length &&
-        !window.confirm('لم تُضِف أي وسم لهذه المهمة. المتابعة بدون وسوم؟')) return;
-    if (draft.points == null &&
-        !window.confirm('لم تُحدِّد نقاطًا لهذه المهمة. المتابعة بدون نقاط؟')) return;
+    // gentle nudges — only when ADDING a new task; editing shouldn't re-nag
+    if (!editingTaskId) {
+      if (!Object.keys(draft.tags).length &&
+          !window.confirm('لم تُضِف أي وسم لهذه المهمة. المتابعة بدون وسوم؟')) return;
+      if (draft.points == null &&
+          !window.confirm('لم تُحدِّد نقاطًا لهذه المهمة. المتابعة بدون نقاط؟')) return;
+    }
 
     var btn = $('#saveTask');
 
@@ -1381,6 +1478,7 @@
         color: draft.color,
         due: draft.due,
         assignees: draft.members,
+        supervisors: Object.keys(draft.supervisors).length ? draft.supervisors : null,
         tags: Object.keys(draft.tags).length ? draft.tags : null,
         points: draft.points || null,
         img: draft.img || null,
@@ -1390,6 +1488,7 @@
         var merged = Object.assign({}, tasks[id], patch);
         if (!patch.img) delete merged.img;      // PATCHing a key to null deletes it server-side too
         if (!patch.emoji) delete merged.emoji;
+        if (!patch.supervisors) delete merged.supervisors;
         tasks[id] = merged;
         $('#addModal').hidden = true;
         toast('تم حفظ التعديلات');
@@ -1410,6 +1509,7 @@
       color: draft.color,
       due: draft.due,
       assignees: draft.members,
+      supervisors: Object.keys(draft.supervisors).length ? draft.supervisors : null,
       done: {},
       tags: Object.keys(draft.tags).length ? draft.tags : null,
       points: draft.points || null,
@@ -1713,11 +1813,12 @@
       if (!document.hidden) { loadTasks(false); refreshNag(); }
     });
 
-    if (isAdmin) {
-      initCropper();
-      renderSwatches(); renderEmojis(); renderTags(); renderPoints();
-      renderCal(); renderPicked(); renderPeople(); validateDraft();
-    }
+    // The add/edit sheet is used by the leader (add + edit) AND by supervisors
+    // (edit their supervised tasks), so prime it for everyone — a plain member
+    // who never opens it pays nothing for the idle DOM.
+    initCropper();
+    renderSwatches(); renderEmojis(); renderTags(); renderPoints();
+    renderCal(); renderPicked(); renderPeople(); renderSupPicked(); renderSupPeople(); validateDraft();
   }
 
   function loadTasks(showLoader) {
@@ -1801,23 +1902,34 @@
     if (tt) { tt.classList.toggle('on', p === 'tasks'); tt.setAttribute('aria-pressed', String(p === 'tasks')); }
     if (tl) { tl.classList.toggle('on', p === 'links'); tl.setAttribute('aria-pressed', String(p === 'links')); }
   }
+  /* snappy in-house tween — the native smooth scroll is too slow/laggy for a
+     two-page pager, so we drive scrollLeft ourselves over a short duration */
+  function animScrollLeft(el, target, dur, done) {
+    var start = el.scrollLeft, delta = target - start, t0 = 0;
+    if (reduceMotion || Math.abs(delta) < 1) { el.scrollLeft = target; if (done) done(); return; }
+    function ease(p) { return p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2; }
+    (function step(ts) {
+      if (!t0) t0 = ts;
+      var p = Math.min(1, (ts - t0) / dur);
+      el.scrollLeft = start + delta * ease(p);
+      if (p < 1) requestAnimationFrame(step); else if (done) done();
+    })(performance.now());
+  }
   function setPage(p) {
     if (p !== 'tasks' && p !== 'links') return;
     markPage(p);
     var split = $('#split');
     if (split && isMobile()) {
       var left = p === 'links' ? split.clientWidth : 0;
-      // `scroll-snap-type:mandatory` fights an in-flight smooth scroll and can
-      // stall the track half-way between pages (the "empty half" glitch). Relax
-      // snap for the button animation, then restore it so finger-swipes still
-      // snap crisply.
+      // `scroll-snap-type:mandatory` fights an in-flight animation and can stall
+      // the track half-way between pages (the "empty half" glitch). Relax snap
+      // for the tween, then restore it so finger-swipes still snap crisply.
       split.style.scrollSnapType = 'none';
-      split.scrollTo({ left: left, behavior: 'smooth' });
       clearTimeout(setPage._snap);
-      setPage._snap = setTimeout(function () {
+      animScrollLeft(split, left, 230, function () {
+        split.scrollLeft = left;            // land exactly on the page
         split.style.scrollSnapType = '';
-        split.scrollLeft = left;            // guarantee we land exactly on the page
-      }, 480);
+      });
     }
     closeFan();
   }
@@ -1838,6 +1950,26 @@
           if (p === 'tasks') closeFan();
         }
       });
+    }, { passive: true });
+
+    /* Flick-to-page: a quick horizontal flick commits to the next page even if
+       the finger didn't drag past the snap threshold. We read the browser's own
+       scroll delta (sign already correct for RTL) so a small nudge toward a page
+       finishes the trip — native snap still handles slow, full drags. */
+    var sx = 0, sy = 0, st = 0, ssl = 0;
+    split.addEventListener('touchstart', function (e) {
+      if (!isMobile()) return;
+      var t = e.touches[0];
+      sx = t.clientX; sy = t.clientY; st = Date.now(); ssl = split.scrollLeft;
+    }, { passive: true });
+    split.addEventListener('touchend', function (e) {
+      if (!isMobile()) return;
+      var t = e.changedTouches[0];
+      var dx = t.clientX - sx, dy = t.clientY - sy, dt = Date.now() - st;
+      if (dt > 350 || Math.abs(dx) < 35 || Math.abs(dx) < Math.abs(dy)) return; // not a horizontal flick
+      var moved = split.scrollLeft - ssl;      // browser's own sign (RTL-safe)
+      if (Math.abs(moved) < 4) return;         // track didn't budge — let native snap decide
+      setPage(moved > 0 ? 'links' : 'tasks');
     }, { passive: true });
   }
 
@@ -1860,8 +1992,8 @@
   }
 
   function initShell() {
-    var v = 'cards';
-    try { v = localStorage.getItem(LS_VIEW) || 'cards'; } catch (e) { }
+    var v = 'pills';
+    try { v = localStorage.getItem(LS_VIEW) || 'pills'; } catch (e) { }
     setView(v);
     var vc = $('#viewCards'), vp = $('#viewPills');
     if (vc) vc.addEventListener('click', function () { setView('cards'); });
@@ -1924,6 +2056,11 @@
         $('#addModal').hidden = true;
         resetDraft();
       }
+    });
+    var supBtn = $('#addSupBtn');
+    if (supBtn) supBtn.addEventListener('click', function () {
+      renderSupPeople(); renderSupPicked();
+      $('#supModal').hidden = false;
     });
     var nameIn = $('#taskName');
     if (nameIn) nameIn.addEventListener('input', validateDraft);
